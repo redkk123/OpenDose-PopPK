@@ -1,6 +1,5 @@
 import numpy as np
-from opendose_poppk import PopulationSimulator
-
+from opendose import PopulationSimulator
 def test_population_runs():
 
     sim = PopulationSimulator()

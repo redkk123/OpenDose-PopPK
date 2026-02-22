@@ -1,20 +1,23 @@
 name: tests
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   test:
-
     runs-on: ubuntu-latest
 
     steps:
-
     - uses: actions/checkout@v3
 
-    - name: install
+    - name: setup python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
 
-      run: pip install -r requirements.txt
+    - name: install deps
+      run: |
+        pip install -r requirements.txt
 
-    - name: test
-
-      run: pytest
+    - name: run tests
+      run: |
+        pytest

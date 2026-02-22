@@ -1,4 +1,4 @@
-from opendose_poppk import MAPEstimator
+from opendose import MAPEstimator
 
 def test_map_runs():
 

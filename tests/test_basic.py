@@ -1,5 +1,5 @@
 import numpy as np
-from opendose_poppk import PKModel
+from opendose import PKModel
 
 def test_concentration_positive():
 
