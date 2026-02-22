@@ -1,0 +1,6 @@
+Drug,F,ka_h,ke_h,Vd_L,EC50_ugmL,n_hill,dose_mg,notes
+Paracetamol,0.80,1.80,0.28,65,10.0,1.50,1000,Analgesic / Antipyretic
+Ibuprofen,0.90,1.50,0.35,12,15.0,1.20,400,NSAID
+Amoxicillin,0.85,1.20,0.70,20,,, 500,Antibiotic (T>MIC model)
+Metformin,0.55,0.41,0.15,650,3.70,0.55,500,Biguanide antidiabetic
+Diazepam,0.95,1.00,0.02,70,0.25,1.80,10,Benzodiazepine

@@ -13,7 +13,7 @@ Tests cover:
 
 import numpy as np
 import pytest
-from opendose import PKModel
+from opendose_poppk import PKModel
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -171,10 +171,10 @@ def test_mass_balance_with_decay():
 
 def test_invalid_half_life():
     """Test that negative or zero half-life raises an error."""
-    with pytest.raises(ValueError, match="phys_half_life_h deve ser positivo"):
+    with pytest.raises(ValueError, match="phys_half_life_h must be positive"):
         PKModel(F=1.0, ka=0.1, ke=0.01, Vd=5.0, phys_half_life_h=-10.0)
     
-    with pytest.raises(ValueError, match="phys_half_life_h deve ser positivo"):
+    with pytest.raises(ValueError, match="phys_half_life_h must be positive"):
         PKModel(F=1.0, ka=0.1, ke=0.01, Vd=5.0, phys_half_life_h=0.0)
 
 
