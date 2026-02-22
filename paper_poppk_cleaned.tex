@@ -1,0 +1,235 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{mathtools}
+
+\geometry{margin=2.5cm}
+
+\sisetup{
+  output-decimal-marker={,},
+  range-phrase=--,
+  per-mode=symbol,
+  detect-weight=true,
+  detect-family=true
+}
+
+\title{Proposed Unified Pharmacokinetic--Pharmacodynamic (PK/PD) Equation:\\
+A Mathematical Formalism for Dynamic Modeling}
+
+\author{Angelo Gabriel C. Silva Gomes$^{*}$\\
+Federal Institute of Brasília (IFB), Brasília, Brazil\\
+\texttt{angelogabriel860@gmail.com}}
+
+\date{February 21, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Integrated pharmacokinetic--pharmacodynamic (PK/PD) modeling, established since Holford \& Sheiner (1981), describes the concentration--effect relationship via composition of a compartmental PK model with a sigmoidal Hill PD model.
+
+This manuscript reviews and clarifies that formalism, providing: (i) explicit analytical derivations of $T_{\max}$, $C_{\max}$ and AUC for the one-compartment, first-order absorption/elimination system; (ii) a generalized state-space/ODE representation for different administration routes; and (iii) an extension including pharmacodynamic delay and additive stochastic variability. Validation is performed using typical clinical parameters for paracetamol (1\,g oral dose).
+\end{abstract}
+
+\noindent\textbf{Keywords:} PK/PD modeling; Quantitative pharmacology; State-space; Paracetamol.
+
+\section{Introduction}
+
+Integrated PK/PD modeling remains the standard for direct link systems where the observed effect is an immediate (or near-immediate) function of plasma concentration. Here we present a concise, didactic derivation of the classic composition
+\[
+h(t) = E\big(C(t)\big),
+\]
+where $C(t)$ is a compartmental concentration profile and $E(\cdot)$ is the Hill concentration--effect function. We keep the first-order, one-compartment absorption/elimination model as the base case.
+
+\section{Pharmacokinetic (PK) Model}
+
+For extravascular (oral) administration with first-order absorption and elimination, the plasma concentration $C(t)$ is
+\begin{equation}
+C(t) =
+\begin{cases}
+\dfrac{F \, D \, k_a}{V_d \, (k_a - k_e)} \bigl(e^{-k_e t} - e^{-k_a t}\bigr), & k_a \neq k_e,\\[8pt]
+\dfrac{F \, D \, k_a}{V_d} \, t \, e^{-k_a t}, & k_a = k_e,
+\end{cases}
+\label{eq:pk}
+\end{equation}
+with the usual meaning of symbols (see Table~\ref{tab:defs}).
+
+For compactness we denote the PK operator
+\begin{equation}
+P(t) \equiv C(t).
+\label{eq:pk_operator}
+\end{equation}
+
+\subsection{Definitions and Units}
+
+\begin{table}[ht]
+\centering
+\caption{Definitions and typical SI units used in this manuscript.}
+\label{tab:defs}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Description & Unit (typical) \\
+\midrule
+$D$ & Administered dose & mg \\
+$F$ & Bioavailability (fraction) & dimensionless \\
+$k_a$ & Absorption rate constant & \si{\per\hour} \\
+$k_e$ & Elimination rate constant & \si{\per\hour} \\
+$V_d$ & Volume of distribution & \si{\liter} \\
+$t$ & Time after administration & \si{\hour} \\
+$C(t)$ & Plasma concentration & \si{\micro\gram\per\milli\litre} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Pharmacodynamic (PD) Model}
+
+We use the sigmoidal Hill function for effect:
+\begin{equation}
+E(t) = E_{\max} \, \frac{\bigl[C(t)\bigr]^n}{EC_{50}^n + \bigl[C(t)\bigr]^n},
+\label{eq:hill}
+\end{equation}
+where $E_{\max}$ is the maximal effect, $EC_{50}$ the half-maximal concentration and $n$ the Hill coefficient.
+
+\section{PK--PD Functional Composition}
+
+The composed response is
+\begin{equation}
+h(t) = E\bigl(C(t)\bigr) = E_{\max} \, \frac{\bigl[P(t)\bigr]^n}{EC_{50}^n + \bigl[P(t)\bigr]^n}.
+\label{eq:composition}
+\end{equation}
+
+\section{Analytical Results: $T_{\max}$, $C_{\max}$ and AUC}
+
+Assuming $k_a \neq k_e$, differentiate $C(t)$ and solve $\dfrac{dC}{dt} = 0$ to obtain $T_{\max}$:
+\begin{align}
+\frac{dC}{dt} &= \frac{F \, D \, k_a}{V_d \, (k_a - k_e)} \bigl(-k_e e^{-k_e t} + k_a e^{-k_a t}\bigr) = 0 \nonumber \\
+&\Longrightarrow k_e e^{-k_e t} = k_a e^{-k_a t} \nonumber \\
+&\Longrightarrow e^{(k_a - k_e)t} = \frac{k_a}{k_e} \nonumber \\
+&\Longrightarrow T_{\max} = \frac{\ln(k_a/k_e)}{k_a - k_e}.
+\label{eq:tmax}
+\end{align}
+
+The peak concentration is $C_{\max} = C(T_{\max})$, i.e.
+\begin{equation}
+C_{\max} = \frac{F \, D \, k_a}{V_d \, (k_a - k_e)} \Bigl(e^{-k_e T_{\max}} - e^{-k_a T_{\max}}\Bigr).
+\label{eq:cmax}
+\end{equation}
+
+Area under the curve (AUC), integrating from $0$ to $\infty$ for $k_a \neq k_e$:
+\begin{align}
+\text{AUC} &= \int_0^\infty C(t) \, dt = \frac{F \, D \, k_a}{V_d \, (k_a - k_e)} \int_0^\infty \bigl(e^{-k_e t} - e^{-k_a t}\bigr) \, dt \nonumber \\
+&= \frac{F \, D \, k_a}{V_d \, (k_a - k_e)} \Bigl(\frac{1}{k_e} - \frac{1}{k_a}\Bigr) = \frac{F \, D}{V_d \, k_e}.
+\label{eq:auc}
+\end{align}
+
+The result \eqref{eq:auc} is the classic AUC formula for extravascular first-order absorption when elimination is first order.
+
+\section{Generalized ODE Representation and State-Space}
+
+A generalized two-compartment (gut $\to$ plasma) ODE system with input $I(t)$:
+\begin{align}
+\dot{A}_g(t) &= I(t) - k_a A_g(t), \label{eq:ag} \\
+\dot{A}_p(t) &= k_a A_g(t) - k_e A_p(t), \label{eq:ap} \\
+C(t) &= \frac{A_p(t)}{V_d}. \label{eq:c}
+\end{align}
+
+In matrix form, with state $\mathbf{A}(t) = [A_g(t), A_p(t)]^{\top}$,
+\begin{equation}
+\frac{d\mathbf{A}}{dt} = 
+\begin{bmatrix} -k_a & 0 \\ k_a & -k_e \end{bmatrix} \mathbf{A} +
+\begin{bmatrix} 1 \\ 0 \end{bmatrix} I(t), \qquad
+C(t) = \begin{bmatrix} 0 & 1/V_d \end{bmatrix} \mathbf{A}(t).
+\label{eq:statespace}
+\end{equation}
+
+Common special cases:
+\begin{itemize}
+  \item IV bolus: $I(t) = D \, \delta(t)$, $A_g(0) = 0$, $A_p(0) = D$.
+  \item Short infusion: $I(t) = k_0 [\mathcal{H}(t) - \mathcal{H}(t-T)]$, $A_g(0) = A_p(0) = 0$.
+  \item Extravascular (oral single dose): $I(t) = 0$ (after dosing instant), $A_g(0) = F D$, $A_p(0) = 0$.
+\end{itemize}
+
+\section{Extension: Pharmacodynamic Delay and Stochastic Term}
+
+To account for delayed PD response and random variability, an effect dynamics can be written
+\begin{equation}
+\frac{dE}{dt}(t) = -k_{\mathrm{off}} \, E(t) + k_{\mathrm{on}} \, \frac{\bigl[C(t-\tau_d)\bigr]^n}{EC_{50}^n + \bigl[C(t-\tau_d)\bigr]^n} + \sigma \, \eta(t),
+\label{eq:stochastic}
+\end{equation}
+where $\tau_d$ is the pharmacodynamic delay, $\sigma$ a noise amplitude and $\eta(t)$ a zero-mean stochastic process (e.g.\ white noise or Gaussian increments in a specific discrete approximation). This form links direct models to indirect/hysteresis models when $\tau_d > 0$ or when an explicit effect compartment is used.
+
+\section{Model Validation: Paracetamol (Example)}
+
+Paracetamol (acetaminophen) at typical analgesic doses is often described by linear kinetics. Reference parameter ranges (literature-reported) and the central values used in this demonstration are in Table~\ref{tab:params}.
+
+\begin{table}[ht]
+\centering
+\caption{Pharmacokinetic and pharmacodynamic parameters used for paracetamol (healthy adults, single 1\,g oral dose).}
+\label{tab:params}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Parameter & Symbol & Value (typical) \\
+\midrule
+Dose & $D$ & 1000\,mg \\
+Bioavailability & $F$ & 0.63--0.89 (use 0.80) \\
+Absorption rate constant & $k_a$ & \SI{1.41}{\per\hour}--\SI{2.4}{\per\hour} (use \SI{1.8}{\per\hour}) \\
+Elimination rate constant & $k_e$ & \SI{0.23}{\per\hour}--\SI{0.35}{\per\hour} (use \SI{0.28}{\per\hour}) \\
+Volume of distribution & $V_d$ & \SI{65}{\liter} \\
+Half-maximal conc. & $EC_{50}$ & \SI{3.4}{\micro\gram\per\milli\litre}--\SI{10}{\micro\gram\per\milli\litre} \\
+& & (use \SI{10}{\micro\gram\per\milli\litre}) \\
+Hill coefficient & $n$ & 0.54--1.5 (use 1.5) \\
+Pharmacodynamic delay & $\tau_d$ & $\approx$1\,h \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Using the central values: $D = \SI{1000}{mg}$, $F = 0.80$, $k_a = \SI{1.8}{\per\hour}$, $k_e = \SI{0.28}{\per\hour}$, $V_d = \SI{65}{\liter}$, $EC_{50} = \SI{10}{\micro\gram\per\milli\litre}$, $n = 1.5$:
+
+\begin{itemize}
+  \item $T_{\max} = \dfrac{\ln(k_a/k_e)}{k_a-k_e} \approx \SI{1.22}{\hour}$ (via \eqref{eq:tmax}).
+  \item $C_{\max} = C(T_{\max}) \approx \SI{8.74}{\micro\gram\per\milli\litre}$ (via \eqref{eq:cmax}).
+  \item $\text{AUC} \approx \SI{43.96}{\micro\gram\hour\per\milli\litre}$ (via \eqref{eq:auc}). Note that units arise from mg, L conversions and 1\,mg/L = 1\,\si{\micro\gram\per\milli\litre}.
+\end{itemize}
+
+(Figures and empirical time-course comparisons can be generated numerically by evaluating \eqref{eq:pk} and \eqref{eq:composition} with the parameter set above.)
+
+\section{Discussion and Conclusions}
+
+This note revisits the classic PK/PD composition, presents concise analytic derivations for key observables, and frames the model in a state-space formalism that is amenable to control-theoretic analysis (stability, controllability, observability) and to extensions such as delays and stochastic perturbations. The model is intentionally minimal (one compartment, first-order kinetics) to keep derivations closed-form; more complex kinetics require numerical simulation or higher-order analytic methods.
+
+\section*{Declarations}
+
+\noindent \textbf{Author:} Angelo Gabriel C. Silva Gomes.\\
+\noindent \textbf{Affiliation:} Federal Institute of Brasília (IFB), Brasília, Brazil.\\
+\noindent \textbf{Corresponding author:} \texttt{angelogabriel860@gmail.com}.
+
+\section*{Acknowledgements}
+
+No competing interests declared. This work is a didactic summary and validation example; parameter sources are literature-reported ranges for paracetamol.
+
+\section*{References}
+
+\begin{thebibliography}{9}
+
+\bibitem{holford1981}
+Holford, N. H. G., \& Sheiner, L. B. (1981). 
+Understanding the dose--effect relationship. 
+\emph{Clinical Pharmacokinetics} (seminal reference, cited for conceptual framework).
+
+\end{thebibliography}
+
+\vspace{2em}
+
+\noindent \textbf{Versão limpa e formatada -- revisada em 22/02/2026.}
+
+\end{document}
