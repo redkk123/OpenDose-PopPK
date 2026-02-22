@@ -13,7 +13,7 @@ Tests cover:
 
 import numpy as np
 import pytest
-from opendose_poppk import PKModel
+from opendose import PKModel
 
 
 # ════════════════════════════════════════════════════════════════════════════

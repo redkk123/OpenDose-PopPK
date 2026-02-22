@@ -49,7 +49,7 @@ pip install -r requirements.txt
 ## 🚀 Quick Start
 
 ```python
-from opendose_poppk import DrugDatabase, PKModel, PDModel
+from opendose import DrugDatabase, PKModel, PDModel
 import numpy as np
 
 # Load parameters from CSV
@@ -94,7 +94,7 @@ The overall clearance is the **sum of biological and physical elimination**.
 ### Example: Lu-177 (Lutetium-177)
 
 ```python
-from opendose_poppk import PKModel
+from opendose import PKModel
 import numpy as np
 
 # Lu-177 half-life: 6.647 days = 159.528 hours
@@ -176,7 +176,7 @@ This ensures:
 ## �💊 Covariate-Adjusted Simulation
 
 ```python
-from opendose_poppk import CovariateModel, PopulationSimulator
+from opendose import CovariateModel, PopulationSimulator
 
 cov = CovariateModel(pk)
 sim = PopulationSimulator(pk, pd, cov, dose=drug.dose)
@@ -197,7 +197,7 @@ result = sim.run(
 ## 🧑‍⚕️ Individual MAP Estimation
 
 ```python
-from opendose_poppk import MAPEstimator
+from opendose import MAPEstimator
 import numpy as np
 
 t_obs = np.array([0.5, 1.0, 2.0, 4.0, 6.0, 8.0])
