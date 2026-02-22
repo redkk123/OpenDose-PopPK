@@ -42,9 +42,28 @@ The library bridges classical compartmental pharmacology and modern control theo
 ## 🛠️ Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/OpenDose-PopPK.git
+git clone https://github.com/redkk123/OpenDose-PopPK.git
 cd OpenDose-PopPK
+# Recommended: install the package for local development
+pip install -e .
+# or install the package (non-editable) and dev dependencies
+pip install .
 pip install -r requirements.txt
+```
+
+### Running tests
+
+Run the test suite with `pytest` (recommended to use a virtualenv):
+
+```bash
+python -m pytest -q
+```
+
+If you want coverage (dev extras include `pytest-cov`):
+
+```bash
+python -m pip install .[dev]
+pytest --cov=opendose_poppk --cov-report=term-missing
 ```
 
 ---

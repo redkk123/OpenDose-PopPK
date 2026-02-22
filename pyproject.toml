@@ -52,10 +52,10 @@ jupyter = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/OpenDose-PopPK"
+Homepage = "https://github.com/redkk123/OpenDose-PopPK"
 Documentation = "https://opendose-poppk.readthedocs.io"
-Repository = "https://github.com/yourusername/OpenDose-PopPK.git"
-"Bug Tracker" = "https://github.com/yourusername/OpenDose-PopPK/issues"
+Repository = "https://github.com/redkk123/OpenDose-PopPK.git"
+"Bug Tracker" = "https://github.com/redkk123/OpenDose-PopPK/issues"
 
 [tool.setuptools]
 packages = ["opendose_poppk"]
