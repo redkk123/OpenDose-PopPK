@@ -74,7 +74,106 @@ print(f"AUC₀→∞ = {auc:.1f} µg·h/mL")
 
 ---
 
-## 💊 Covariate-Adjusted Simulation
+## � Radioactive Isotope Modeling (Physical Decay)
+
+OpenDose-PopPK supports pharmacokinetic modeling of **radioactive pharmaceuticals** (e.g., Lu-177, I-131, Y-90) by incorporating physical decay of the isotope.
+
+### Theory
+
+For radioactive drugs, the activity (MBq) decays due to both biological elimination and physical decay of the isotope:
+
+$$\frac{dA}{dt} = -\left(k_e + \lambda_{\text{phys}}\right)A(t)$$
+
+where:
+- $k_e$ — biological elimination rate constant (h⁻¹)
+- $\lambda_{\text{phys}}$ — physical decay constant (h⁻¹) =  $\frac{\ln(2)}{t_{1/2}}$
+- $t_{1/2}$ — physical half-life of the isotope (hours)
+
+The overall clearance is the **sum of biological and physical elimination**.
+
+### Example: Lu-177 (Lutetium-177)
+
+```python
+from opendose_poppk import PKModel
+import numpy as np
+
+# Lu-177 half-life: 6.647 days = 159.528 hours
+pk = PKModel(
+    F=1.0,                      # 100% bioavailability (IV injection)
+    ka=0.0,                     # no absorption (IV)
+    ke=0.01,                    # biological clearance (h⁻¹)
+    Vd=5.0,                     # volume of distribution (L)
+    Q=0.5,                      # inter-compartment flow (L/h)
+    V2=2.0,                     # peripheral volume (L)
+    phys_half_life_h=159.528    # Lu-177 physical half-life in hours
+)
+
+# Dose: 7400 MBq (typical therapeutic activity)
+t = np.linspace(0, 168, 500)  # 7 days
+A = pk.concentration(t, D=7400.0)  # Activity profile (MBq)
+
+# AUC accounts for both biological and physical elimination
+auc = pk.auc(D=7400.0)
+print(f"AUC₀→∞ = {auc:.1f} MBq·h")
+```
+
+### Key Parameters (Unit Consistency)
+
+| Parameter | Unit | Description |
+|-----------|------|-------------|
+| `D` | MBq (or Bq) | Initial activity dose |
+| `t` | h (hours) | Time post-injection |
+| `C` or `A1` | MBq or MBq/L | Activity in compartment (central, peripheral) |
+| `CL` | L/h | Biological clearance rate |
+| `V1`, `V2` | L | Central and peripheral volumes |
+| `Q` | L/h | Inter-compartmental flow |
+| `phys_half_life_h` | h (hours) | Physical half-life of isotope |
+| `lambda_phys` | h⁻¹ | Physical decay constant = ln(2) / t_1/2 |
+
+### Decay Impact on PK Metrics
+
+**Without decay:** AUC = F·D / CL  
+**With decay:** AUC is reduced; computed numerically:
+$$\text{AUC}_{0→\infty} = \int_0^∞ C(t) \, dt \quad \text{(includes} \, \lambda_{\text{phys}})$$
+
+```python
+# Compare models with/without decay
+pk_no_decay = PKModel(F=1.0, ka=0.0, ke=0.01, Vd=5.0)
+pk_with_decay = PKModel(F=1.0, ka=0.0, ke=0.01, Vd=5.0,
+                        phys_half_life_h=159.528)
+
+auc_no_decay = pk_no_decay.auc(D=7400.0)
+auc_with_decay = pk_with_decay.auc(D=7400.0)
+
+print(f"AUC without decay: {auc_no_decay:.1f} MBq·h")
+print(f"AUC with decay:    {auc_with_decay:.1f} MBq·h")
+print(f"Reduction: {100*(auc_no_decay - auc_with_decay)/auc_no_decay:.1f}%")
+```
+
+### Balance of Mass (Mass Balance Check)
+
+The model enforces conservation of mass across compartments:
+
+$$\frac{d(A_1 + A_2)}{dt} = -\text{CL} \frac{A_1}{V_1} - \lambda_{\text{phys}}(A_1 + A_2)$$
+
+This ensures:
+- Biological clearance acts only on central concentration
+- Physical decay acts on activity in **all** compartments
+- Total activity decreases exponentially when no input
+
+### Common Radioisotopes
+
+| Isotope | Half-Life | Application |
+|---------|-----------|------------|
+| **Lu-177** | 6.647 days | Peptide receptor radionuclide therapy (PRRT) |
+| **I-131** | 8.0 days | Thyroid cancer, hyperthyroidism |
+| **Y-90** | 64.1 hours | Radioembolization, monoclonal antibody therapy |
+| **Tc-99m** | 6.0 hours | Diagnostic imaging |
+| **F-18** | 110 minutes | PET imaging |
+
+---
+
+## �💊 Covariate-Adjusted Simulation
 
 ```python
 from opendose_poppk import CovariateModel, PopulationSimulator

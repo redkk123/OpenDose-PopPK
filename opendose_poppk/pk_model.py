@@ -32,6 +32,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from scipy.optimize import minimize
+from scipy.integrate import solve_ivp, trapezoid
 from typing import Optional
 
 
@@ -134,11 +135,62 @@ class PKModel:
     """
 
     def __init__(self, F: float = 0.80, ka: float = 1.80,
-                 ke: float = 0.28, Vd: float = 65.0):
+                 ke: float = 0.28, Vd: float = 65.0,
+                 Q: float = 10.0, V2: float = 20.0,
+                 CL: float | None = None, V: float | None = None,
+                 phys_half_life_h: float | None = None):
+        """
+        Compat: aceita os parâmetros clássicos (F, ka, ke, Vd) e adiciona
+        parâmetros de inter-compartimento `Q` e volume periférico `V2`.
+
+        Internamente computamos `CL = ke * Vd` e `V1 = Vd` para manter
+        compatibilidade com o código existente que usa `ke` e `Vd`.
+        """
         self.F  = float(F)
         self.ka = float(ka)
-        self.ke = float(ke)
-        self.Vd = float(Vd)
+
+        # Suporte a parâmetros alternativos: CL e V (V1)
+        if CL is not None and V is not None:
+            self.CL = float(CL)
+            self.V1 = float(V)
+            # derivado para compatibilidade
+            self.ke = float(self.CL / self.V1)
+            self.Vd = float(self.V1)
+        else:
+            # comportamento legado: ke e Vd fornecidos
+            self.ke = float(ke)
+            self.Vd = float(Vd)
+            self.CL = float(self.ke * self.Vd)
+            self.V1 = float(self.Vd)
+
+        # novo: inter-compartimental
+        self.Q  = float(Q)
+        self.V2 = float(V2)
+
+        # Parâmetros de decaimento físico (isótopos radioativos)
+        # - `phys_half_life_h`: meia-vida física em horas (se fornecida)
+        # - `lambda_phys`   : constante de decaimento (h^-1) = ln(2)/t_half
+        # A decaimento físico atua sobre a atividade (quantidade) em todos
+        # os compartimentos e deve ser somado às taxas de eliminação
+        # biológicas para obter a perda total de atividade.
+        if phys_half_life_h is not None:
+            if phys_half_life_h <= 0:
+                raise ValueError("phys_half_life_h deve ser positivo se fornecido")
+            self.phys_half_life_h = float(phys_half_life_h)
+            self.lambda_phys = float(np.log(2.0) / self.phys_half_life_h)
+        else:
+            self.phys_half_life_h = None
+            self.lambda_phys = 0.0
+
+        # Documentação técnica curta dos principais parâmetros (unidades)
+        # - CL  : clearance sistêmico (L/h). Taxa de remoção biológica do
+        #         compartimento central quando multiplicado por concentração
+        #         (CL * C [L/h * MBq/L] -> MBq/h).
+        # - V1  : volume do compartimento central (L). Usado para converter
+        #         amount -> concentração: C = A1 / V1 (MBq/L).
+        # - Q   : fluxo inter-compartimental (L/h). Controla transferência
+        #         entre central e periférico (k12 = Q / V1, k21 = Q / V2).
+        # - V2  : volume do compartimento periférico (L).
 
     # ── Equação analítica ────────────────────────────────────────────────────
 
@@ -148,30 +200,87 @@ class PKModel:
 
         Parâmetros
         ----------
-        t : array de tempos (h)
-        D : dose administrada (mg)
+                t : array de tempos (h)
+                D : dose/atividade administrada (por exemplo: mg ou MBq)
+
+                Observações de unidades
+                -----------------------
+                - Tempo é esperado em horas (h).
+                - Se `D` representa atividade radioativa (MBq), então `A1`/`A2`
+                    e as concentrações serão em MBq e MBq/L, respectivamente.
+                - `CL` deve estar em L/h, `Q` em L/h, `V1`/`V2` em L.
         """
-        t  = np.asarray(t, dtype=float)
-        ka, ke = self.ka, self.ke
+        # Integra numericamente o sistema 2-compartimentos (quantidades)
+        t = np.atleast_1d(np.asarray(t, dtype=float))
 
-        if abs(ka - ke) < 1e-6:
-            # Caso especial (Bateman degenerado)
-            C = (self.F * D * ka / self.Vd) * t * np.exp(-ka * t)
+        CL = self.CL
+        V1 = self.V1
+        Q  = self.Q
+        V2 = self.V2
+
+        def rhs(ti, y):
+            A1, A2 = y
+            # Taxas inter-compartimentais
+            k10 = CL / V1      # eliminação biológica do central (h^-1)
+            k12 = Q  / V1      # central -> periférico (h^-1)
+            k21 = Q  / V2      # periférico -> central (h^-1)
+
+            # Perda física (decaimento) age sobre a atividade em todos
+            # os compartimentos e é adicionada às taxas de saída.
+            lam = self.lambda_phys
+
+            # dA1/dt: saída por clearance biológico, distribuição e decaimento
+            dA1 = - (k10 + k12 + lam) * A1 + (k21) * A2
+            # dA2/dt: troca com central e decaimento físico no periférico
+            dA2 = (k12) * A1 - (k21 + lam) * A2
+            return [dA1, dA2]
+
+        # Aplicar a dose no compartimento central (AMT no central)
+        A1_0 = self.F * D
+        A2_0 = 0.0
+
+        if np.any(t < 0):
+            raise ValueError("Tempos t devem ser não-negativos")
+
+        # Caso com um único tempo pedido: tratar separadamente para evitar
+        # t_span com t0 == tf, o que falha em solve_ivp.
+        if t.size == 1:
+            if t[0] == 0.0:
+                A1 = np.array([A1_0])
+            else:
+                sol = solve_ivp(rhs, (0.0, float(t[0])), [A1_0, A2_0],
+                                t_eval=[float(t[0])], vectorized=False,
+                                rtol=1e-6, atol=1e-8)
+                A1 = sol.y[0]
         else:
-            C = (self.F * D * ka / (self.Vd * (ka - ke))) * \
-                (np.exp(-ke * t) - np.exp(-ka * t))
-
+            # Integra uma vez com pontos requisitados
+            sol = solve_ivp(rhs, (t.min(), t.max()), [A1_0, A2_0], t_eval=t,
+                            vectorized=False, rtol=1e-6, atol=1e-8)
+            A1 = sol.y[0]
+        C  = A1 / V1
         return np.maximum(C, 0.0)
 
     def cmax(self, D: float = 1000.0) -> tuple[float, float]:
-        """Retorna (Cmax, Tmax) analíticos."""
-        tmax = np.log(self.ka / self.ke) / (self.ka - self.ke)
-        cmax = self.concentration(np.array([tmax]), D)[0]
-        return float(cmax), float(tmax)
+        """Retorna (Cmax, Tmax) numéricos usando `concentration`."""
+        # procura o máximo numericamente em um intervalo razoável
+        t = np.linspace(0, 24.0, 1000)
+        C = self.concentration(t, D=D)
+        idx = np.nanargmax(C)
+        return float(C[idx]), float(t[idx])
 
     def auc(self, D: float = 1000.0) -> float:
-        """AUC₀→∞ analítica (µg·h/mL)."""
-        return self.F * D / (self.Vd * self.ke)
+        """AUC₀→∞ analítica para modelo linear: AUC = F·D / CL."""
+        # Se não há decaimento físico, a expressão analítica é válida
+        if self.lambda_phys == 0.0:
+            return self.F * D / self.CL
+
+        # Se existe decaimento físico, o AUC é reduzido pela perda física.
+        # Para o sistema multi-compartimento, usamos integração numérica
+        # do perfil de concentração para obter AUC₀→∞ de forma robusta.
+        t_end = max(24.0, 10.0 / max(self.ke, 1e-6), 10.0 / max(self.lambda_phys, 1e-6))
+        t = np.linspace(0.0, t_end, 2000)
+        C = self.concentration(t, D=D)
+        return float(trapezoid(C, t))
 
     # ── Monte Carlo (sem covariáveis) ────────────────────────────────────────
 
@@ -183,6 +292,8 @@ class PKModel:
         cv_ke: float = 0.30,
         cv_ka: float = 0.25,
         cv_Vd: float = 0.30,
+        cv_Q: float = 0.25,
+        cv_V2: float = 0.25,
         seed: int = 42,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
@@ -203,11 +314,19 @@ class PKModel:
             ke_i = self.ke * np.exp(rng.normal(0, cv_ke))
             ka_i = self.ka * np.exp(rng.normal(0, cv_ka))
             Vd_i = self.Vd * np.exp(rng.normal(0, cv_Vd))
+            Q_i   = self.Q  * np.exp(rng.normal(0, cv_Q))
+            V2_i  = self.V2 * np.exp(rng.normal(0, cv_V2))
+
             ke_i = max(ke_i, 1e-6)
             ka_i = max(ka_i, 1e-6)
+            Vd_i = max(Vd_i, 1e-3)
+            Q_i   = max(Q_i, 1e-6)
+            V2_i  = max(V2_i, 1e-3)
+
             if abs(ka_i - ke_i) < 1e-4:
                 ke_i *= 0.99
-            m = PKModel(F=self.F, ka=ka_i, ke=ke_i, Vd=Vd_i)
+
+            m = PKModel(F=self.F, ka=ka_i, ke=ke_i, Vd=Vd_i, Q=Q_i, V2=V2_i)
             profiles[i] = m.concentration(t, D=D)
 
         return (np.percentile(profiles, 50, axis=0),
@@ -224,16 +343,24 @@ class PKModel:
         -------
         dict com A, B, eigenvalues, is_stable
         """
-        A = np.array([[-self.ka,      0.0],
-                      [ self.ka, -self.ke]])
+        # Utilizamos quantidades (A1 = amount central, A2 = amount periférico)
+        k10 = self.CL / self.V1
+        k12 = self.Q  / self.V1
+        k21 = self.Q  / self.V2
+
+        # Incluir decaimento físico nas entradas diagonais (se aplicável):
+        lam = self.lambda_phys
+        A = np.array([[-(k10 + k12 + lam),  k21],
+                  [ k12,               -(k21 + lam)]])
         B = np.array([[1.0], [0.0]])
-        ev = np.array([-self.ka, -self.ke])
+        ev = np.linalg.eigvals(A)
         return {"A": A, "B": B, "eigenvalues": ev,
-                "is_stable": bool(np.all(ev < 0))}
+            "is_stable": bool(np.all(np.real(ev) < 0))}
 
     def __repr__(self) -> str:
-        return (f"PKModel(F={self.F}, ka={self.ka}, "
-                f"ke={self.ke}, Vd={self.Vd})")
+        if self.phys_half_life_h is not None:
+            return (f"PKModel(F={self.F}, ka={self.ka}, CL={self.CL}, V1={self.V1}, Q={self.Q}, V2={self.V2}, t_half_h={self.phys_half_life_h})")
+        return (f"PKModel(F={self.F}, ka={self.ka}, CL={self.CL}, V1={self.V1}, Q={self.Q}, V2={self.V2})")
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -439,13 +566,13 @@ class PopulationSimulator:
         "age":    (18,  100), "alt":  ( 5, 500), "bmi": (15, 60),
     }
 
-    def __init__(self, pk: PKModel,
+    def __init__(self, pk: Optional[PKModel] = None,
                  pd: Optional[PDModel] = None,
                  covariate_model: Optional[CovariateModel] = None,
                  dose: float = 1000.0):
-        self.pk   = pk
+        self.pk   = pk or PKModel()
         self.pd   = pd
-        self.cov  = covariate_model or CovariateModel(pk)
+        self.cov  = covariate_model or CovariateModel(self.pk)
         self.dose = dose
 
     def run(self,
@@ -518,6 +645,14 @@ class PopulationSimulator:
             "sexes":           sexes,
         }
 
+    # Compatibilidade com API legada: `simulate(n=...)` retorna uma lista de
+    # perfis (um por indivíduo). Isso facilita testes simples que apenas
+    # verificam o tamanho da amostra.
+    def simulate(self, n: int = 10):
+        res = self.run(n_subjects=n, n_points=50)
+        profiles = [res["pk_profiles"][i] for i in range(res["pk_profiles"].shape[0])]
+        return profiles
+
 
 # ════════════════════════════════════════════════════════════════════════════
 # 6. MAP ESTIMATOR
@@ -543,11 +678,12 @@ class MAPEstimator:
     >>> print(res["params_map"])
     """
 
-    def __init__(self, pk: PKModel,
+    def __init__(self, pk: Optional[PKModel] = None,
                  covariate_model: Optional[CovariateModel] = None,
                  sigma_obs: float = 1.0):
-        self.pk    = pk
-        self.cov   = covariate_model or CovariateModel(pk)
+        # permitir construção sem argumento para compatibilidade com testes
+        self.pk    = pk or PKModel()
+        self.cov   = covariate_model or CovariateModel(self.pk)
         self.sigma = sigma_obs
 
     def fit(self, times: np.ndarray, obs: np.ndarray,
