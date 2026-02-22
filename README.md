@@ -1,4 +1,7 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 ![tests](https://github.com/redkk123/OpenDose-PopPK/actions/workflows/tests.yml/badge.svg)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # OpenDose-PopPK 🔬💊
 
@@ -49,7 +52,7 @@ pip install -r requirements.txt
 ## 🚀 Quick Start
 
 ```python
-from opendose import DrugDatabase, PKModel, PDModel
+from opendose_poppk import DrugDatabase, PKModel, PDModel
 import numpy as np
 
 # Load parameters from CSV
@@ -94,7 +97,7 @@ The overall clearance is the **sum of biological and physical elimination**.
 ### Example: Lu-177 (Lutetium-177)
 
 ```python
-from opendose import PKModel
+from opendose_poppk import PKModel
 import numpy as np
 
 # Lu-177 half-life: 6.647 days = 159.528 hours
@@ -176,7 +179,7 @@ This ensures:
 ## �💊 Covariate-Adjusted Simulation
 
 ```python
-from opendose import CovariateModel, PopulationSimulator
+from opendose_poppk import CovariateModel, PopulationSimulator
 
 cov = CovariateModel(pk)
 sim = PopulationSimulator(pk, pd, cov, dose=drug.dose)
@@ -197,7 +200,7 @@ result = sim.run(
 ## 🧑‍⚕️ Individual MAP Estimation
 
 ```python
-from opendose import MAPEstimator
+from opendose_poppk import MAPEstimator
 import numpy as np
 
 t_obs = np.array([0.5, 1.0, 2.0, 4.0, 6.0, 8.0])
