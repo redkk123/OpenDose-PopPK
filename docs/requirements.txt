@@ -1,3 +1,5 @@
-sphinx==4.5.0
-sphinx-rtd-theme==0.5.3
-sphinx-autodoc-typehints==1.11.0
+# Required packages for Sphinx documentation
+sphinx>=5.0
+sphinx-rtd-theme
+sphinx-autodoc-typehints
+sphinx-copybutton
