@@ -1,3 +1,5 @@
+![tests](https://github.com/redkk123/OpenDose-PopPK/actions/workflows/tests.yml/badge.svg)
+
 # OpenDose-PopPK 🔬💊
 
 **A modular, open-source Python framework for Population Pharmacokinetic-Pharmacodynamic (PopPK/PD) modeling.**
