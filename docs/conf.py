@@ -1,31 +1,26 @@
-# Sphinx configuration file
+import os
+import sys
+from datetime import datetime
 
-# Import the necessary Sphinx extensions and settings
-author = 'Your Name'
-project = 'OpenDose-PopPK'
-version = '0.1'
-release = '0.1.0'
-documentation_theme = 'sphinx_rtd_theme'
+sys.path.insert(0, os.path.abspath(".."))
 
-# Sphinx settings
-autodoc_mock_imports = ['numpy', 'pandas']
+project = "OpenDose-PopPK"
+author = "Angelo Gabriel C. Silva Gomes"
+copyright = f"{datetime.now().year}"
+release = "1.0.0"
+
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.coverage',
-    'sphinx.ext.napoleon',
-    documentation_theme,
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.viewcode",
+    "sphinx_autodoc_typehints",
 ]
 
-# Paths for templates
-templates_path = ['_templates']
-
-# Source suffix
-source_suffix = '.rst'
-
-# Master document
-master_doc = 'index'
-
-# General information about the project
-html_title = project + ' Documentation'
-html_logo = 'logo.png'
-html_static_path = ['_static']
+html_theme = "sphinx_rtd_theme"
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+html_static_path = ["_static"]
+source_suffix = ".rst"
+master_doc = "index"
