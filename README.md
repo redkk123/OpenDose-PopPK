@@ -53,18 +53,21 @@ pip install -r requirements.txt
 
 ### Running tests
 
-Run the test suite with `pytest` (recommended to use a virtualenv):
-
 ```bash
-python -m pytest -q
+pytest -q
 ```
 
-If you want coverage (dev extras include `pytest-cov`):
+On Windows: `make.bat test` or `python -m pytest -q`
+
+With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
+
+### Generating figures
 
 ```bash
-python -m pip install .[dev]
-pytest --cov=opendose_poppk --cov-report=term-missing
+python main.py
 ```
+
+Figures are saved to `figures/`. On Windows: `make.bat figures`
 
 ---
 
@@ -260,19 +263,29 @@ $$\theta_i = \theta_{pop} \cdot \prod_k\left(\frac{COV_k}{ref_k}\right)^{\beta_k
 
 ```
 OpenDose-PopPK/
-├── opendose_poppk.py       ← Core library (all classes + plots)
+├── opendose_poppk/         ← Core package (PK, PD, covariate, population, bayesian)
 ├── main.py                 ← Full pipeline (generates all figures)
-├── requirements.txt
-├── .gitignore
-├── datasets/
-│   └── drugs_parameters.csv
+├── docs/                   ← Sphinx documentation
 ├── notebooks/
 │   └── demo_paracetamol.ipynb
+├── datasets/
+│   └── drugs_parameters.csv
 └── figures/
     ├── monte_carlo_paracetamol.png
     ├── drug_comparison_panel.png
     ├── covariate_simulation.png
     └── map_estimation.png
+```
+
+---
+
+## 📚 Documentation
+
+Full documentation is available at [opendose-poppk.readthedocs.io](https://opendose-poppk.readthedocs.io) or build locally:
+
+```bash
+pip install -e ".[docs]"
+sphinx-build -b html docs docs/_build/html
 ```
 
 ---
@@ -290,6 +303,12 @@ If you use this framework in your research, please cite:
   note   = {arXiv preprint}
 }
 ```
+
+---
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. [CHANGELOG.md](CHANGELOG.md) lists version history.
 
 ---
 
