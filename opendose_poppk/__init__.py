@@ -38,3 +38,5 @@ __all__ = [
     "PopulationSimulator",
     "MAPEstimator",
 ]
+
+from .plotting import plot_monte_carlo, plot_population_with_covariates, plot_map_fit, plot_drug_comparison
