@@ -53,7 +53,7 @@ pip install -r requirements.txt
 ### Running tests
 
 ```bash
-pytest -q
+
 ```
 
 On Windows: `make.bat test` or `python -m pytest -q`
@@ -63,7 +63,7 @@ With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-repo
 ### Generating figures
 
 ```bash
-
+python main.py
 ```
 
 Figures are saved to `figures/`. On Windows: `make.bat figures`
