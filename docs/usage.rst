@@ -82,6 +82,15 @@ CLI Environment Check
 
     opendose doctor --strict
 
+CLI Project Report
+------------------
+
+.. code-block:: bash
+
+    opendose project-report \
+      --drug Paracetamol \
+      --output-md output/reports/project_report.md
+
 CLI Drug Dataset Validation
 ---------------------------
 

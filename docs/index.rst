@@ -24,7 +24,7 @@ lightweight library.
    :target: https://opensource.org/licenses/MIT
    :alt: License: MIT
 
-Latest local validation: March 5, 2026 (Python 3.14.2), ``python -m pytest -q`` -> ``129 passed``.
+Latest local validation: March 5, 2026 (Python 3.14.2), ``python -m pytest -q`` -> ``135 passed``.
 
 ----
 

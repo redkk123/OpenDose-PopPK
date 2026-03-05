@@ -31,6 +31,7 @@ from .regimen_dosing import (
     recommend_regimen_dose_for_target_window,
 )
 from .sensitivity import local_pk_sensitivity
+from .project_report import build_project_report, render_project_report_markdown
 from .regimen import simulate_regimen, summarize_regimen, write_regimen_csv, write_regimen_plot
 
 # plotting imports
@@ -72,6 +73,8 @@ __all__ = [
     "recommend_regimen_dose_for_target_trough",
     "recommend_regimen_dose_for_target_window",
     "local_pk_sensitivity",
+    "build_project_report",
+    "render_project_report_markdown",
     "simulate_regimen",
     "summarize_regimen",
     "write_regimen_csv",

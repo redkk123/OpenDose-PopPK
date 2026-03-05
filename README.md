@@ -35,6 +35,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 - **Regimen dose recommendation** — suggest repeated-dose amount for target Cmax/trough
 - **Therapeutic-window regimen recommendation** — suggest repeated-dose amount for trough/Cmax window
 - **Local sensitivity analysis** — quantify how PK parameters impact Cmax/AUC
+- **Project health report** — generate JSON/Markdown diagnostics (dataset + smoke + sensitivity)
 - **DrugDatabase** — loads and manages parameters from CSV
 - **Publication-ready figures** — all plots from the companion paper
 
@@ -78,7 +79,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `129 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `135 passed`.
 
 ### CLI
 
@@ -97,6 +98,7 @@ opendose run-tdm-workflow --drug Paracetamol --input data/tdm.csv --outdir outpu
 opendose benchmark-regimen --drugs Paracetamol,Ibuprofen,Diazepam --interval-h 12 --n-doses 4 --output-csv output/tables/regimen_benchmark.csv
 opendose fit-tdm-mixed --input data/tdm_mixed.csv --output output/tables/tdm_mixed_fit.csv
 opendose doctor --strict
+opendose project-report --drug Paracetamol --output-md output/reports/project_report.md
 opendose recommend-dose --drug Paracetamol --target-cmax 10 --weight 80 --crcl 70 --age 55 --output-json output/reports/dose_recommendation.json
 opendose recommend-regimen-dose --drug Paracetamol --target-trough 1.0 --interval-h 12 --n-doses 4 --output-json output/reports/regimen_dose_recommendation.json
 opendose recommend-regimen-window --drug Paracetamol --target-trough-min 0.05 --target-cmax-max 12.0 --interval-h 12 --n-doses 4 --strategy midpoint --output-json output/reports/regimen_window_recommendation.json

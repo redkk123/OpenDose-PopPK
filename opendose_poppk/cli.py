@@ -13,6 +13,7 @@ from .benchmark import benchmark_regimen_across_drugs, write_benchmark_csv
 from .database import DrugDatabase, validate_drug_csv
 from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cmax
 from .population_fit import bootstrap_population_pk, fit_population_pk
+from .project_report import build_project_report, render_project_report_markdown
 from .regimen import simulate_regimen, summarize_regimen, write_regimen_csv, write_regimen_plot
 from .regimen_dosing import (
     recommend_regimen_dose_for_target_cmax,
@@ -502,6 +503,34 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_project_report(args: argparse.Namespace) -> int:
+    report = build_project_report(
+        dataset=str(args.dataset),
+        drug=str(args.drug),
+        dose=args.dose,
+        t_end=float(args.t_end),
+        n_points=int(args.n_points),
+        rel_step=float(args.rel_step),
+    )
+    output_md = None
+    if args.output_md:
+        out = Path(args.output_md)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(render_project_report_markdown(report), encoding="utf-8")
+        output_md = str(out)
+
+    payload = {
+        "command": "project-report",
+        "output_md": output_md,
+        **report,
+    }
+    _print_json(payload)
+
+    if args.strict and report["failures"]:
+        return 1
+    return 0
+
+
 def cmd_recommend_dose(args: argparse.Namespace) -> int:
     if args.target_cmax is None and args.target_auc is None:
         raise ValueError("Provide --target-cmax or --target-auc")
@@ -796,6 +825,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_doctor = sub.add_parser("doctor", help="Run local environment and dataset health checks")
     p_doctor.add_argument("--strict", action="store_true", help="Exit with code 1 if any check fails")
     p_doctor.set_defaults(func=cmd_doctor)
+
+    p_report = sub.add_parser("project-report", help="Generate project health report (dataset + smoke + sensitivity)")
+    p_report.add_argument("--drug", default="Paracetamol", help="Drug name for sensitivity analysis")
+    p_report.add_argument("--dose", type=float, default=None, help="Dose override for sensitivity section")
+    p_report.add_argument("--t-end", type=float, default=24.0, help="Time horizon for sensitivity section")
+    p_report.add_argument("--n-points", type=int, default=400, help="Number of points for sensitivity section")
+    p_report.add_argument("--rel-step", type=float, default=0.10, help="Relative perturbation in (0,1)")
+    p_report.add_argument("--output-md", default=None, help="Optional markdown report output path")
+    p_report.add_argument("--strict", action="store_true", help="Exit with code 1 if report contains failures")
+    p_report.set_defaults(func=cmd_project_report)
 
     p_dose = sub.add_parser("recommend-dose", help="Recommend dose to hit target Cmax or AUC")
     p_dose.add_argument("--drug", required=True, help="Drug name from dataset")

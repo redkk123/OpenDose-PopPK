@@ -474,6 +474,48 @@ def test_cli_doctor_pk_smoke_failure_non_strict(monkeypatch, capsys):
     assert any("pk_smoke" in msg for msg in payload["failures"])
 
 
+def test_cli_project_report_success(tmp_path, capsys):
+    dataset_csv = tmp_path / "drugs.csv"
+    report_md = tmp_path / "project_report.md"
+    dataset_csv.write_text(
+        "Drug,F,ka_h,ke_h,Vd_L,dose_mg,EC50_ugmL,n_hill\n"
+        "Paracetamol,0.8,1.8,0.28,65,1000,10,1.5\n",
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "--dataset",
+            str(dataset_csv),
+            "project-report",
+            "--drug",
+            "Paracetamol",
+            "--output-md",
+            str(report_md),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "project-report"
+    assert payload["report_ok"] is True
+    assert payload["dataset_ok"] is True
+    assert payload["sensitivity_ok"] is True
+    assert report_md.exists()
+    assert "OpenDose Project Report" in report_md.read_text(encoding="utf-8")
+
+
+def test_cli_project_report_strict_failure(capsys):
+    code = main(["--dataset", "missing_drug_dataset.csv", "project-report", "--strict"])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 1
+    assert payload["command"] == "project-report"
+    assert payload["report_ok"] is False
+    assert payload["dataset_ok"] is False
+    assert len(payload["failures"]) >= 1
+
+
 def test_cli_recommend_dose_cmax(tmp_path, capsys):
     out_json = tmp_path / "dose_cmax.json"
     code = main(
