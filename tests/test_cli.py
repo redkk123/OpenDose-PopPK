@@ -474,6 +474,43 @@ def test_cli_validate_tdm(tmp_path, capsys):
     assert clean_csv.exists()
 
 
+def test_cli_validate_tdm_with_unit_overrides(tmp_path, capsys):
+    input_csv = tmp_path / "tdm_units.csv"
+    clean_csv = tmp_path / "tdm_units_clean.csv"
+    input_csv.write_text(
+        "patient,time,conc,dose\n"
+        "P1,60,4200,1\n"
+        "P2,120,3100,0.5\n",
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "validate-tdm",
+            "--input",
+            str(input_csv),
+            "--time-unit",
+            "min",
+            "--conc-unit",
+            "ng/mL",
+            "--dose-unit",
+            "g",
+            "--output-clean",
+            str(clean_csv),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "validate-tdm"
+    assert payload["rows"] == 2
+    assert payload["time_unit"] == "h"
+    assert payload["conc_unit"] == "ug/mL"
+    assert payload["dose_unit"] == "mg"
+    assert clean_csv.exists()
+    assert clean_csv.read_text(encoding="utf-8").startswith("patient_id,time_h,conc,dose_mg")
+
+
 def test_cli_fit_tdm(tmp_path, capsys):
     input_csv = tmp_path / "tdm_fit.csv"
     out_csv = tmp_path / "fit_table.csv"
@@ -572,7 +609,20 @@ def test_cli_init_tdm_template(tmp_path, capsys):
     payload = json.loads(out)
     assert code == 0
     assert payload["command"] == "init-tdm-template"
+    assert payload["format"] == "basic"
     assert out_csv.exists()
+
+
+def test_cli_init_tdm_template_clinical(tmp_path, capsys):
+    out_csv = tmp_path / "template_clinical.csv"
+    code = main(["init-tdm-template", "--output", str(out_csv), "--format", "clinical"])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "init-tdm-template"
+    assert payload["format"] == "clinical"
+    assert out_csv.exists()
+    assert "time_unit" in out_csv.read_text(encoding="utf-8")
 
 
 def test_cli_run_tdm_workflow(tmp_path, capsys):

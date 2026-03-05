@@ -25,7 +25,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 - **Monte Carlo simulation** — inter-individual variability with 90% prediction intervals
 - **Covariate modeling** — weight, renal function (CrCl), age, hepatic markers (Power Model)
 - **MAP estimation** — individual Bayesian fitting from sparse observed samples
-- **Clinical TDM input validation** — CSV cleaning and summary for patient observations
+- **Clinical TDM input validation** — robust CSV cleaning with alias mapping and automatic unit normalization
 - **Drug dataset validation** — schema and value checks for drug parameter CSV
 - **Batch TDM fitting** — MAP estimation per patient from real-world monitoring tables
 - **TDM prediction diagnostics** — per-observation predictions and residual error tables
@@ -85,7 +85,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `160 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `169 passed`.
 
 ### PyPI publishing (maintainers)
 
@@ -116,9 +116,11 @@ opendose dose-sweep --drug Paracetamol --doses 250,500,750,1000 --output-csv out
 opendose simulate-regimen --drug Paracetamol --interval-h 12 --n-doses 4 --output-csv output/tables/paracetamol_regimen.csv --plot-png output/figures/paracetamol_regimen.png
 opendose fit --drug Paracetamol --times 0.5,1,2,4 --obs 4.2,6.8,7.5,5.9 --weight 80 --crcl 70 --age 55
 opendose validate-tdm --input data/tdm.csv --output-clean output/tables/tdm_clean.csv
+opendose validate-tdm --input data/tdm_raw.csv --time-unit min --conc-unit ng/mL --dose-unit g --output-clean output/tables/tdm_clean.csv
 opendose fit-tdm --drug Paracetamol --input data/tdm.csv --output output/tables/tdm_fit.csv --predictions-csv output/tables/tdm_predictions.csv --plot-png output/figures/tdm_obs_vs_pred.png --report-md output/reports/tdm_fit_report.md
 opendose fit-population --input data/tdm.csv --maxiter 2000 --bootstrap-n 200 --output-json output/reports/pop_fit.json
 opendose init-tdm-template --output data/tdm_template.csv
+opendose init-tdm-template --format clinical --output data/tdm_template_clinical.csv
 opendose run-tdm-workflow --drug Paracetamol --input data/tdm.csv --outdir output/workflows/tdm_paracetamol
 opendose benchmark-regimen --drugs Paracetamol,Ibuprofen,Diazepam --interval-h 12 --n-doses 4 --output-csv output/tables/regimen_benchmark.csv
 opendose fit-tdm-mixed --input data/tdm_mixed.csv --output output/tables/tdm_mixed_fit.csv

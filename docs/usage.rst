@@ -172,6 +172,32 @@ CLI Drug Dataset Validation
       --dataset datasets/drugs_parameters.csv \
       --output-clean output/tables/drugs_parameters_clean.csv
 
+CLI TDM Validation
+------------------
+
+.. code-block:: bash
+
+    opendose validate-tdm \
+      --input data/tdm.csv \
+      --output-clean output/tables/tdm_clean.csv
+
+.. code-block:: bash
+
+    opendose validate-tdm \
+      --input data/tdm_raw.csv \
+      --time-unit min \
+      --conc-unit ng/mL \
+      --dose-unit g \
+      --output-clean output/tables/tdm_clean.csv
+
+CLI TDM Templates
+-----------------
+
+.. code-block:: bash
+
+    opendose init-tdm-template --output data/tdm_template.csv
+    opendose init-tdm-template --format clinical --output data/tdm_template_clinical.csv
+
 CLI Dose Recommendation
 -----------------------
 

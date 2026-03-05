@@ -447,7 +447,12 @@ def cmd_fit(args: argparse.Namespace) -> int:
 
 
 def cmd_validate_tdm(args: argparse.Namespace) -> int:
-    df = load_tdm_csv(args.input)
+    df = load_tdm_csv(
+        args.input,
+        time_unit=args.time_unit,
+        conc_unit=args.conc_unit,
+        dose_unit=args.dose_unit,
+    )
     if args.output_clean:
         out = Path(args.output_clean)
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -551,8 +556,8 @@ def cmd_fit_population(args: argparse.Namespace) -> int:
 
 
 def cmd_init_tdm_template(args: argparse.Namespace) -> int:
-    path = write_tdm_template_csv(args.output)
-    _print_json({"command": "init-tdm-template", "output": path})
+    path = write_tdm_template_csv(args.output, template_format=args.format)
+    _print_json({"command": "init-tdm-template", "output": path, "format": args.format})
     return 0
 
 
@@ -1012,6 +1017,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_tdm = sub.add_parser("validate-tdm", help="Validate and summarize TDM CSV input")
     p_tdm.add_argument("--input", required=True, help="Path to TDM CSV")
+    p_tdm.add_argument("--time-unit", default="h", help="Fallback time unit for numeric values (h|min|day)")
+    p_tdm.add_argument(
+        "--conc-unit",
+        default="ug/mL",
+        help="Fallback concentration unit for numeric values (e.g., ug/mL, mg/L, ng/mL)",
+    )
+    p_tdm.add_argument(
+        "--dose-unit",
+        default="mg",
+        help="Fallback dose unit for numeric values (mg|g|ug|ng)",
+    )
     p_tdm.add_argument("--output-clean", default=None, help="Optional path to save cleaned CSV")
     p_tdm.set_defaults(func=cmd_validate_tdm)
 
@@ -1044,6 +1060,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_template = sub.add_parser("init-tdm-template", help="Create an empty TDM CSV template")
     p_template.add_argument("--output", required=True, help="Output CSV path")
+    p_template.add_argument(
+        "--format",
+        choices=["basic", "clinical"],
+        default="basic",
+        help="Template format: basic canonical columns or clinical raw-data oriented columns",
+    )
     p_template.set_defaults(func=cmd_init_tdm_template)
 
     p_workflow = sub.add_parser("run-tdm-workflow", help="Run end-to-end TDM pipeline in one command")

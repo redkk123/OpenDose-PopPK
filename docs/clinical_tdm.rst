@@ -20,6 +20,19 @@ Optional columns used as covariates when present:
 - ``crcl``
 - ``age``
 
+Flexible real-world aliases are accepted during loading/validation. For example:
+
+- ``patient`` or ``subject_id`` -> ``patient_id``
+- ``time`` or ``sampling_time`` -> ``time_h``
+- ``concentration`` -> ``conc``
+- ``dose`` -> ``dose_mg``
+
+Unit normalization is automatic to canonical units:
+
+- Time -> hours (supports ``h``, ``min``, ``day``)
+- Concentration -> ``ug/mL`` (supports ``ug/mL``, ``mg/L``, ``ng/mL``, ``mg/mL``, ``ug/L``, ``g/L``)
+- Dose -> ``mg`` (supports ``mg``, ``g``, ``ug``, ``ng``)
+
 CLI Workflow
 ------------
 
@@ -29,11 +42,18 @@ CLI Workflow
 
     opendose init-tdm-template --output data/tdm_template.csv
 
+   # Clinical/raw-data oriented template with explicit unit columns:
+   opendose init-tdm-template --format clinical --output data/tdm_template_clinical.csv
+
 2. Validate and clean raw TDM table:
 
 .. code-block:: bash
 
     opendose validate-tdm --input data/tdm.csv --output-clean output/tables/tdm_clean.csv
+
+   # Optional fallback units when numeric values have no explicit units:
+   opendose validate-tdm --input data/tdm.csv --time-unit min --conc-unit ng/mL --dose-unit g \
+     --output-clean output/tables/tdm_clean.csv
 
 3. Run MAP fitting for each patient:
 
