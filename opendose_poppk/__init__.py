@@ -25,6 +25,12 @@ from .tdm_report import (
 )
 from .population_fit import fit_population_pk, bootstrap_population_pk
 from .poppk_mixed import fit_population_mixed_effects, eta_table_from_fit
+from .external_validation import (
+    build_external_validation_table,
+    load_external_validation_csv,
+    summarize_external_validation,
+    write_external_validation_template_csv,
+)
 from .benchmark import benchmark_regimen_across_drugs, write_benchmark_csv
 from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cmax
 from .dose_sweep import sweep_dose_response
@@ -74,6 +80,10 @@ __all__ = [
     "bootstrap_population_pk",
     "fit_population_mixed_effects",
     "eta_table_from_fit",
+    "load_external_validation_csv",
+    "build_external_validation_table",
+    "summarize_external_validation",
+    "write_external_validation_template_csv",
     "benchmark_regimen_across_drugs",
     "write_benchmark_csv",
     "recommend_dose_for_target_auc",

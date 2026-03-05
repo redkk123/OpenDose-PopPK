@@ -14,6 +14,12 @@ from .cohort import load_cohort_csv, simulate_cohort, summarize_cohort, write_co
 from .database import DrugDatabase, validate_drug_csv
 from .dose_sweep import sweep_dose_response
 from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cmax
+from .external_validation import (
+    build_external_validation_table,
+    load_external_validation_csv,
+    summarize_external_validation,
+    write_external_validation_template_csv,
+)
 from .population_fit import bootstrap_population_pk, fit_population_pk
 from .poppk_mixed import eta_table_from_fit, fit_population_mixed_effects
 from .project_report import build_project_report, render_project_report_markdown
@@ -615,6 +621,43 @@ def cmd_init_tdm_template(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_validate_external(args: argparse.Namespace) -> int:
+    df = load_external_validation_csv(args.input)
+    db = DrugDatabase(args.dataset)
+    drug = db.get_drug(args.drug)
+    pk = PKModel(**drug.pk_kwargs)
+    table = build_external_validation_table(df, pk=pk)
+    summary = summarize_external_validation(table)
+
+    predictions_csv = None
+    if args.predictions_csv:
+        out = Path(args.predictions_csv)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        table.to_csv(out, index=False)
+        predictions_csv = str(out)
+
+    payload = {
+        "command": "validate-external",
+        "input": str(args.input),
+        "drug": drug.name,
+        "predictions_csv": predictions_csv,
+        "output_json": str(args.output_json) if args.output_json else None,
+        **summary,
+    }
+    if args.output_json:
+        out = Path(args.output_json)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    _print_json(payload)
+    return 0
+
+
+def cmd_init_external_template(args: argparse.Namespace) -> int:
+    path = write_external_validation_template_csv(args.output)
+    _print_json({"command": "init-external-template", "output": path})
+    return 0
+
+
 def cmd_run_tdm_workflow(args: argparse.Namespace) -> int:
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -1136,6 +1179,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="Template format: basic canonical columns or clinical raw-data oriented columns",
     )
     p_template.set_defaults(func=cmd_init_tdm_template)
+
+    p_ext = sub.add_parser(
+        "validate-external",
+        help="Run external validation against observed concentrations and optional reference predictions",
+    )
+    p_ext.add_argument("--input", required=True, help="Path to external validation CSV")
+    p_ext.add_argument("--drug", required=True, help="Drug name from dataset")
+    p_ext.add_argument("--predictions-csv", default=None, help="Optional output CSV for prediction table")
+    p_ext.add_argument("--output-json", default=None, help="Optional JSON output path")
+    p_ext.set_defaults(func=cmd_validate_external)
+
+    p_ext_template = sub.add_parser("init-external-template", help="Create an external validation CSV template")
+    p_ext_template.add_argument("--output", required=True, help="Output CSV path")
+    p_ext_template.set_defaults(func=cmd_init_external_template)
 
     p_workflow = sub.add_parser("run-tdm-workflow", help="Run end-to-end TDM pipeline in one command")
     p_workflow.add_argument("--input", required=True, help="Path to TDM CSV")

@@ -210,6 +210,21 @@ CLI Population Mixed-Effects Fit
       --eta-csv output/tables/pop_mixed_eta.csv \
       --output-json output/reports/pop_mixed_fit.json
 
+CLI External Validation
+-----------------------
+
+.. code-block:: bash
+
+    opendose init-external-template --output data/external_validation_template.csv
+
+.. code-block:: bash
+
+    opendose validate-external \
+      --drug Paracetamol \
+      --input data/external_validation.csv \
+      --predictions-csv output/tables/external_predictions.csv \
+      --output-json output/reports/external_validation.json
+
 CLI Dose Recommendation
 -----------------------
 

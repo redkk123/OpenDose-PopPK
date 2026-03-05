@@ -696,6 +696,54 @@ def test_cli_init_tdm_template_clinical(tmp_path, capsys):
     assert "time_unit" in out_csv.read_text(encoding="utf-8")
 
 
+def test_cli_validate_external(tmp_path, capsys):
+    input_csv = tmp_path / "external.csv"
+    out_json = tmp_path / "external_report.json"
+    out_pred = tmp_path / "external_predictions.csv"
+    input_csv.write_text(
+        "patient_id,time_h,dose_mg,obs_conc,ref_conc,study_id\n"
+        "P1,1.0,1000,4.2,4.1,StudyA\n"
+        "P1,2.0,1000,6.8,6.5,StudyA\n"
+        "P2,1.0,750,3.1,3.0,StudyA\n"
+        "P2,2.0,750,5.0,4.7,StudyA\n",
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "validate-external",
+            "--drug",
+            "Paracetamol",
+            "--input",
+            str(input_csv),
+            "--predictions-csv",
+            str(out_pred),
+            "--output-json",
+            str(out_json),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "validate-external"
+    assert payload["drug"] == "Paracetamol"
+    assert payload["rows"] == 4
+    assert payload["with_reference"] is True
+    assert payload["predictions_csv"] == str(out_pred)
+    assert out_pred.exists()
+    assert out_json.exists()
+
+
+def test_cli_init_external_template(tmp_path, capsys):
+    out_csv = tmp_path / "external_template.csv"
+    code = main(["init-external-template", "--output", str(out_csv)])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "init-external-template"
+    assert out_csv.exists()
+
+
 def test_cli_run_tdm_workflow(tmp_path, capsys):
     input_csv = tmp_path / "tdm_workflow.csv"
     outdir = tmp_path / "workflow_out"

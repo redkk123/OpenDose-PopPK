@@ -33,6 +33,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 - **Population PK fitting (naive pooled)** — estimate typical PK parameters from TDM datasets
 - **Population PK mixed-effects fitting** — estimate fixed effects (theta) and random effects (omega/eta)
 - **Bootstrap uncertainty for population fit** — confidence intervals for F/ka/ke/Vd
+- **External validation toolkit** — compare model predictions with observed and reference-software concentrations
 - **End-to-end TDM workflow command** — run full clinical pipeline in one execution
 - **Multi-drug regimen benchmarking** — compare Cmax/trough/AUC across selected compounds
 - **Mixed-drug TDM fitting** — run MAP fits when a single CSV contains multiple drugs
@@ -86,7 +87,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `176 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `181 passed`.
 
 ### PyPI publishing (maintainers)
 
@@ -121,6 +122,8 @@ opendose validate-tdm --input data/tdm_raw.csv --time-unit min --conc-unit ng/mL
 opendose fit-tdm --drug Paracetamol --input data/tdm.csv --output output/tables/tdm_fit.csv --predictions-csv output/tables/tdm_predictions.csv --plot-png output/figures/tdm_obs_vs_pred.png --report-md output/reports/tdm_fit_report.md
 opendose fit-population --input data/tdm.csv --maxiter 2000 --bootstrap-n 200 --output-json output/reports/pop_fit.json
 opendose fit-population-mixed --drug Paracetamol --input data/tdm.csv --maxiter 1200 --eta-csv output/tables/pop_mixed_eta.csv --output-json output/reports/pop_mixed_fit.json
+opendose init-external-template --output data/external_validation_template.csv
+opendose validate-external --drug Paracetamol --input data/external_validation.csv --predictions-csv output/tables/external_predictions.csv --output-json output/reports/external_validation.json
 opendose init-tdm-template --output data/tdm_template.csv
 opendose init-tdm-template --format clinical --output data/tdm_template_clinical.csv
 opendose run-tdm-workflow --drug Paracetamol --input data/tdm.csv --outdir output/workflows/tdm_paracetamol

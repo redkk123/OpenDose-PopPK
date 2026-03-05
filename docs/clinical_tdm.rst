@@ -104,6 +104,17 @@ CLI Workflow
       --input data/tdm_mixed.csv \
       --output output/tables/tdm_mixed_fit.csv
 
+7. Run external validation (observed vs model and optional reference software):
+
+.. code-block:: bash
+
+    opendose init-external-template --output data/external_validation_template.csv
+    opendose validate-external \
+      --drug Paracetamol \
+      --input data/external_validation.csv \
+      --predictions-csv output/tables/external_predictions.csv \
+      --output-json output/reports/external_validation.json
+
 Programmatic Workflow
 ---------------------
 
