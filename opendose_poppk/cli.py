@@ -11,6 +11,7 @@ from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulato
 from .database import DrugDatabase
 from .tdm import load_tdm_csv, summarize_tdm
 from .tdm_fit import fit_tdm_patients, summarize_fit_table
+from .tdm_report import write_tdm_fit_markdown_report
 
 
 def _default_dataset() -> str:
@@ -152,6 +153,9 @@ def cmd_fit_tdm(args: argparse.Namespace) -> int:
         out = Path(args.output)
         out.parent.mkdir(parents=True, exist_ok=True)
         fit_df.to_csv(out, index=False)
+    report_md = None
+    if args.report_md:
+        report_md = write_tdm_fit_markdown_report(fit_df=fit_df, drug_name=drug.name, output_path=args.report_md)
 
     _print_json(
         {
@@ -161,6 +165,7 @@ def cmd_fit_tdm(args: argparse.Namespace) -> int:
             "sigma_obs": float(args.sigma_obs),
             "n_iter": int(args.n_iter),
             "output": str(args.output) if args.output else None,
+            "report_md": report_md,
             **summarize_fit_table(fit_df),
         }
     )
@@ -214,6 +219,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_fit_tdm.add_argument("--sigma-obs", type=float, default=0.8, help="Observation noise sigma")
     p_fit_tdm.add_argument("--n-iter", type=int, default=3000, help="Maximum optimizer iterations")
     p_fit_tdm.add_argument("--output", default=None, help="Optional CSV output path for patient fit table")
+    p_fit_tdm.add_argument("--report-md", default=None, help="Optional markdown summary report output path")
     p_fit_tdm.set_defaults(func=cmd_fit_tdm)
 
     return parser

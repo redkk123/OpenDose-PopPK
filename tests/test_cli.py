@@ -130,6 +130,7 @@ def test_cli_validate_tdm(tmp_path, capsys):
 def test_cli_fit_tdm(tmp_path, capsys):
     input_csv = tmp_path / "tdm_fit.csv"
     out_csv = tmp_path / "fit_table.csv"
+    out_md = tmp_path / "fit_report.md"
     input_csv.write_text(
         "patient_id,time_h,conc,dose_mg,weight\n"
         "P1,1.0,4.2,1000,80\n"
@@ -150,6 +151,8 @@ def test_cli_fit_tdm(tmp_path, capsys):
             "500",
             "--output",
             str(out_csv),
+            "--report-md",
+            str(out_md),
         ]
     )
     out = capsys.readouterr().out
@@ -158,3 +161,5 @@ def test_cli_fit_tdm(tmp_path, capsys):
     assert payload["command"] == "fit-tdm"
     assert payload["patients"] == 2
     assert out_csv.exists()
+    assert out_md.exists()
+    assert payload["report_md"] == str(out_md)
