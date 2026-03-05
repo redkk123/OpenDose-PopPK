@@ -58,6 +58,9 @@ Documentation = "https://opendose-poppk.readthedocs.io"
 Repository = "https://github.com/redkk123/OpenDose-PopPK.git"
 "Bug Tracker" = "https://github.com/redkk123/OpenDose-PopPK/issues"
 
+[project.scripts]
+opendose = "opendose_poppk.cli:main"
+
 [tool.setuptools]
 packages = ["opendose_poppk"]
 
