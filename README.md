@@ -28,6 +28,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 - **Bootstrap uncertainty for population fit** — confidence intervals for F/ka/ke/Vd
 - **End-to-end TDM workflow command** — run full clinical pipeline in one execution
 - **Multi-drug regimen benchmarking** — compare Cmax/trough/AUC across selected compounds
+- **Mixed-drug TDM fitting** — run MAP fits when a single CSV contains multiple drugs
 - **DrugDatabase** — loads and manages parameters from CSV
 - **Publication-ready figures** — all plots from the companion paper
 
@@ -71,7 +72,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `97 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `101 passed`.
 
 ### CLI
 
@@ -86,6 +87,7 @@ opendose fit-population --input data/tdm.csv --maxiter 2000 --bootstrap-n 200 --
 opendose init-tdm-template --output data/tdm_template.csv
 opendose run-tdm-workflow --drug Paracetamol --input data/tdm.csv --outdir output/workflows/tdm_paracetamol
 opendose benchmark-regimen --drugs Paracetamol,Ibuprofen,Diazepam --interval-h 12 --n-doses 4 --output-csv output/tables/regimen_benchmark.csv
+opendose fit-tdm-mixed --input data/tdm_mixed.csv --output output/tables/tdm_mixed_fit.csv
 ```
 
 ### Generating figures

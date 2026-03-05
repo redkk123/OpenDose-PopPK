@@ -19,6 +19,7 @@ from .tdm_fit import (
     summarize_fit_table,
     summarize_prediction_table,
 )
+from .tdm_mixed import fit_tdm_mixed_by_drug, summarize_tdm_mixed_fit
 from .tdm_report import write_tdm_fit_markdown_report, write_tdm_prediction_plot
 
 
@@ -360,6 +361,35 @@ def cmd_benchmark_regimen(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_fit_tdm_mixed(args: argparse.Namespace) -> int:
+    df = load_tdm_csv(args.input)
+    fit_df = fit_tdm_mixed_by_drug(
+        df=df,
+        dataset=args.dataset,
+        sigma_obs=args.sigma_obs,
+        n_iter=args.n_iter,
+    )
+
+    output_csv = None
+    if args.output:
+        out = Path(args.output)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        fit_df.to_csv(out, index=False)
+        output_csv = str(out)
+
+    _print_json(
+        {
+            "command": "fit-tdm-mixed",
+            "input": str(args.input),
+            "output": output_csv,
+            "sigma_obs": float(args.sigma_obs),
+            "n_iter": int(args.n_iter),
+            **summarize_tdm_mixed_fit(fit_df),
+        }
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="opendose", description="OpenDose-PopPK CLI")
     parser.add_argument(
@@ -463,6 +493,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_bench.add_argument("--dose-override", type=float, default=None, help="If set, use same dose for all drugs")
     p_bench.add_argument("--output-csv", default=None, help="Optional CSV output path for benchmark table")
     p_bench.set_defaults(func=cmd_benchmark_regimen)
+
+    p_fit_tdm_mixed = sub.add_parser(
+        "fit-tdm-mixed", help="Run MAP fit for mixed-drug TDM table (requires drug column)"
+    )
+    p_fit_tdm_mixed.add_argument("--input", required=True, help="Path to TDM CSV with drug column")
+    p_fit_tdm_mixed.add_argument("--sigma-obs", type=float, default=0.8, help="Observation noise sigma")
+    p_fit_tdm_mixed.add_argument("--n-iter", type=int, default=3000, help="Maximum optimizer iterations")
+    p_fit_tdm_mixed.add_argument("--output", default=None, help="Optional output CSV path")
+    p_fit_tdm_mixed.set_defaults(func=cmd_fit_tdm_mixed)
 
     return parser
 

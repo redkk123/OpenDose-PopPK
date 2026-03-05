@@ -16,6 +16,7 @@ from .tdm_fit import (
     summarize_fit_table,
     summarize_prediction_table,
 )
+from .tdm_mixed import fit_tdm_mixed_by_drug, summarize_tdm_mixed_fit
 from .tdm_report import (
     build_tdm_fit_markdown_report,
     write_tdm_fit_markdown_report,
@@ -49,6 +50,8 @@ __all__ = [
     "summarize_fit_table",
     "build_tdm_prediction_table",
     "summarize_prediction_table",
+    "fit_tdm_mixed_by_drug",
+    "summarize_tdm_mixed_fit",
     "build_tdm_fit_markdown_report",
     "write_tdm_fit_markdown_report",
     "write_tdm_prediction_plot",

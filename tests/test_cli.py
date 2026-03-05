@@ -329,3 +329,36 @@ def test_cli_benchmark_regimen(tmp_path, capsys):
     assert payload["output_csv"] == str(out_csv)
     assert payload["top_drug_by_cmax"] is not None
     assert out_csv.exists()
+
+
+def test_cli_fit_tdm_mixed(tmp_path, capsys):
+    input_csv = tmp_path / "tdm_mixed.csv"
+    out_csv = tmp_path / "tdm_mixed_fit.csv"
+    input_csv.write_text(
+        "patient_id,drug,time_h,conc,dose_mg,weight\n"
+        "P1,Paracetamol,1.0,4.2,1000,80\n"
+        "P1,Paracetamol,2.0,6.8,1000,80\n"
+        "P2,Ibuprofen,1.0,2.1,500,65\n"
+        "P2,Ibuprofen,2.0,3.4,500,65\n",
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "fit-tdm-mixed",
+            "--input",
+            str(input_csv),
+            "--n-iter",
+            "500",
+            "--output",
+            str(out_csv),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "fit-tdm-mixed"
+    assert payload["groups"] == 2
+    assert payload["patients"] == 2
+    assert payload["drugs"] == 2
+    assert out_csv.exists()

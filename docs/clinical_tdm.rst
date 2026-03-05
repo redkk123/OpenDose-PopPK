@@ -65,6 +65,14 @@ CLI Workflow
       --input data/tdm.csv \
       --outdir output/workflows/tdm_paracetamol
 
+6. Fit mixed-drug TDM file (must include ``drug`` column):
+
+.. code-block:: bash
+
+    opendose fit-tdm-mixed \
+      --input data/tdm_mixed.csv \
+      --output output/tables/tdm_mixed_fit.csv
+
 Programmatic Workflow
 ---------------------
 
