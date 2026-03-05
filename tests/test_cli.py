@@ -114,6 +114,16 @@ def test_cli_simulate_cohort_validation(capsys, tmp_path):
     assert "Missing required cohort columns" in err
 
 
+def test_cli_init_cohort_template(tmp_path, capsys):
+    out_csv = tmp_path / "cohort_template.csv"
+    code = main(["init-cohort-template", "--output", str(out_csv)])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "init-cohort-template"
+    assert out_csv.exists()
+
+
 def test_cli_sensitivity(tmp_path, capsys):
     out_csv = tmp_path / "sensitivity.csv"
     code = main(

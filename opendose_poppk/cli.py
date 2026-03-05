@@ -10,7 +10,7 @@ import numpy as np
 
 from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulator
 from .benchmark import benchmark_regimen_across_drugs, write_benchmark_csv
-from .cohort import load_cohort_csv, simulate_cohort, summarize_cohort
+from .cohort import load_cohort_csv, simulate_cohort, summarize_cohort, write_cohort_template_csv
 from .database import DrugDatabase, validate_drug_csv
 from .dose_sweep import sweep_dose_response
 from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cmax
@@ -154,6 +154,12 @@ def cmd_simulate_cohort(args: argparse.Namespace) -> int:
             **summarize_cohort(out_df),
         }
     )
+    return 0
+
+
+def cmd_init_cohort_template(args: argparse.Namespace) -> int:
+    path = write_cohort_template_csv(args.output)
+    _print_json({"command": "init-cohort-template", "output": path})
     return 0
 
 
@@ -810,6 +816,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_cohort.add_argument("--seed", type=int, default=42, help="Random seed (used when --include-iiv)")
     p_cohort.add_argument("--output-csv", default=None, help="Optional output CSV path")
     p_cohort.set_defaults(func=cmd_simulate_cohort)
+
+    p_cohort_template = sub.add_parser("init-cohort-template", help="Create an example cohort CSV template")
+    p_cohort_template.add_argument("--output", required=True, help="Output CSV path")
+    p_cohort_template.set_defaults(func=cmd_init_cohort_template)
 
     p_sens = sub.add_parser("sensitivity", help="Run local parameter sensitivity analysis (Cmax/AUC)")
     p_sens.add_argument("--drug", required=True, help="Drug name from dataset")

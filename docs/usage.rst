@@ -63,6 +63,14 @@ CLI Cohort Simulation
       --input data/cohort.csv \
       --output-csv output/tables/cohort_simulation.csv
 
+CLI Cohort Template
+-------------------
+
+.. code-block:: bash
+
+    opendose init-cohort-template \
+      --output data/cohort_template.csv
+
 CLI Sensitivity Analysis
 ------------------------
 

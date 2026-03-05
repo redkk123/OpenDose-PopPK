@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from opendose_poppk import PKModel, load_cohort_csv, simulate_cohort, summarize_cohort
+from opendose_poppk import PKModel, load_cohort_csv, simulate_cohort, summarize_cohort, write_cohort_template_csv
 
 
 def test_load_cohort_csv_success_and_normalization(tmp_path):
@@ -91,3 +91,11 @@ def test_simulate_cohort_validation_and_summary():
     df_nan_sex = pd.DataFrame({"patient_id": ["P2"], "sex": ["nan"]})
     out_nan_sex = simulate_cohort(df_nan_sex, pk_template=pk_template, default_dose=1000.0, include_iiv=False)
     assert out_nan_sex.loc[0, "sex"] == "M"
+
+
+def test_write_cohort_template_csv(tmp_path):
+    out = tmp_path / "cohort_template.csv"
+    path = write_cohort_template_csv(out)
+    assert path == str(out)
+    text = out.read_text(encoding="utf-8")
+    assert text.startswith("patient_id,sex,weight,crcl,age,dose")

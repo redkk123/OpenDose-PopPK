@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 from .covariate import CovariateModel
 from .pk_model import PKModel
@@ -124,3 +125,23 @@ def summarize_cohort(df: pd.DataFrame) -> dict:
         "auc_mean": float(df["auc"].mean()),
         "auc_p50": float(df["auc"].median()),
     }
+
+
+def write_cohort_template_csv(path: str | Path) -> str:
+    """
+    Create an empty cohort CSV template with required/optional columns.
+    """
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    df = pd.DataFrame(
+        {
+            "patient_id": ["P001", "P002"],
+            "sex": ["M", "F"],
+            "weight": [80.0, 65.0],
+            "crcl": [70.0, 90.0],
+            "age": [55.0, 40.0],
+            "dose": [1000.0, np.nan],
+        }
+    )
+    df.to_csv(out, index=False)
+    return str(out)

@@ -82,7 +82,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `145 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `147 passed`.
 
 ### CLI
 
@@ -90,6 +90,7 @@ Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` ->
 opendose list-drugs
 opendose validate-dataset --output-clean output/tables/drugs_parameters_clean.csv
 opendose simulate --drug Paracetamol --n-subjects 200 --t-max 12 --output output/tables/paracetamol_cli.csv
+opendose init-cohort-template --output data/cohort_template.csv
 opendose simulate-cohort --drug Paracetamol --input data/cohort.csv --output-csv output/tables/cohort_simulation.csv
 opendose sensitivity --drug Paracetamol --dose 1000 --rel-step 0.1 --output-csv output/tables/sensitivity_paracetamol.csv
 opendose dose-sweep --drug Paracetamol --doses 250,500,750,1000 --output-csv output/tables/dose_sweep_paracetamol.csv
