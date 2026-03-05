@@ -243,6 +243,16 @@ CLI Web App Baseline
     # Local server mode:
     opendose web-app --drug Paracetamol --host 127.0.0.1 --port 8000
 
+CLI Validation Report
+---------------------
+
+.. code-block:: bash
+
+    opendose validation-report \
+      --drug Paracetamol \
+      --output-md output/reports/validation_report.md \
+      --output-json output/reports/validation_report.json
+
 CLI Dose Recommendation
 -----------------------
 

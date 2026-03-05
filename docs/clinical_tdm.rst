@@ -115,6 +115,15 @@ CLI Workflow
       --predictions-csv output/tables/external_predictions.csv \
       --output-json output/reports/external_validation.json
 
+8. Generate reproducible validation report (protocol + metrics + limitations):
+
+.. code-block:: bash
+
+    opendose validation-report \
+      --drug Paracetamol \
+      --output-md output/reports/validation_report.md \
+      --output-json output/reports/validation_report.json
+
 Programmatic Workflow
 ---------------------
 

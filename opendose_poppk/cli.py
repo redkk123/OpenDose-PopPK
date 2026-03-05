@@ -39,6 +39,7 @@ from .tdm_fit import (
 )
 from .tdm_mixed import fit_tdm_mixed_by_drug, summarize_tdm_mixed_fit
 from .tdm_report import write_tdm_fit_markdown_report, write_tdm_prediction_plot
+from .validation_report import build_validation_report, render_validation_report_markdown
 from .web_app import build_web_app_payload, run_web_app_server, write_web_app_html
 
 
@@ -891,6 +892,44 @@ def cmd_project_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_validation_report(args: argparse.Namespace) -> int:
+    report = build_validation_report(
+        dataset=str(args.dataset),
+        drug=str(args.drug),
+        external_input=str(args.external_input) if args.external_input else None,
+        n_subjects=int(args.n_subjects),
+        t_end=float(args.t_end),
+        n_points=int(args.n_points),
+        seed=int(args.seed),
+    )
+
+    output_md = None
+    if args.output_md:
+        out = Path(args.output_md)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(render_validation_report_markdown(report), encoding="utf-8")
+        output_md = str(out)
+
+    output_json = None
+    if args.output_json:
+        out = Path(args.output_json)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
+        output_json = str(out)
+
+    payload = {
+        "command": "validation-report",
+        "output_md": output_md,
+        "output_json": output_json,
+        **report,
+    }
+    _print_json(payload)
+
+    if args.strict and report["failures"]:
+        return 1
+    return 0
+
+
 def cmd_recommend_dose(args: argparse.Namespace) -> int:
     if args.target_cmax is None and args.target_auc is None:
         raise ValueError("Provide --target-cmax or --target-auc")
@@ -1306,6 +1345,21 @@ def build_parser() -> argparse.ArgumentParser:
     p_report.add_argument("--output-md", default=None, help="Optional markdown report output path")
     p_report.add_argument("--strict", action="store_true", help="Exit with code 1 if report contains failures")
     p_report.set_defaults(func=cmd_project_report)
+
+    p_val_report = sub.add_parser(
+        "validation-report",
+        help="Generate reproducible scientific validation report (protocol, metrics, limitations)",
+    )
+    p_val_report.add_argument("--drug", default="Paracetamol", help="Drug name for internal validation metrics")
+    p_val_report.add_argument("--external-input", default=None, help="Optional external validation CSV input")
+    p_val_report.add_argument("--n-subjects", type=int, default=200, help="Population simulation size")
+    p_val_report.add_argument("--t-end", type=float, default=24.0, help="Time horizon for simulation metrics")
+    p_val_report.add_argument("--n-points", type=int, default=300, help="Number of points for simulation metrics")
+    p_val_report.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
+    p_val_report.add_argument("--output-md", default=None, help="Optional markdown report output path")
+    p_val_report.add_argument("--output-json", default=None, help="Optional JSON report output path")
+    p_val_report.add_argument("--strict", action="store_true", help="Exit with code 1 if report contains failures")
+    p_val_report.set_defaults(func=cmd_validation_report)
 
     p_dose = sub.add_parser("recommend-dose", help="Recommend dose to hit target Cmax or AUC")
     p_dose.add_argument("--drug", required=True, help="Drug name from dataset")

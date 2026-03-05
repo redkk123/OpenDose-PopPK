@@ -962,6 +962,59 @@ def test_cli_project_report_strict_failure(capsys):
     assert len(payload["failures"]) >= 1
 
 
+def test_cli_validation_report_success(tmp_path, capsys):
+    dataset_csv = tmp_path / "drugs.csv"
+    out_md = tmp_path / "validation_report.md"
+    out_json = tmp_path / "validation_report.json"
+    dataset_csv.write_text(
+        "Drug,F,ka_h,ke_h,Vd_L,dose_mg\n"
+        "Paracetamol,0.8,1.8,0.28,65,1000\n",
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "--dataset",
+            str(dataset_csv),
+            "validation-report",
+            "--drug",
+            "Paracetamol",
+            "--n-subjects",
+            "30",
+            "--t-end",
+            "12",
+            "--n-points",
+            "120",
+            "--seed",
+            "7",
+            "--output-md",
+            str(out_md),
+            "--output-json",
+            str(out_json),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "validation-report"
+    assert payload["report_ok"] is True
+    assert payload["internal"] is not None
+    assert payload["output_md"] == str(out_md)
+    assert payload["output_json"] == str(out_json)
+    assert out_md.exists()
+    assert out_json.exists()
+
+
+def test_cli_validation_report_strict_failure(capsys):
+    code = main(["--dataset", "missing_drug_dataset.csv", "validation-report", "--strict"])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 1
+    assert payload["command"] == "validation-report"
+    assert payload["report_ok"] is False
+    assert len(payload["failures"]) >= 1
+
+
 def test_cli_recommend_dose_cmax(tmp_path, capsys):
     out_json = tmp_path / "dose_cmax.json"
     code = main(
