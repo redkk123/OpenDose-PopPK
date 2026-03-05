@@ -24,11 +24,15 @@ def test_validation_report_success(tmp_path):
     assert report["internal"] is not None
     assert report["internal"]["population"]["n_subjects"] == 30
     assert report["external"] is None
+    assert "licensed tools" in report["external_validation_licensing_warning"]
+    assert "billing/credits" in report["cloud_cicd_billing_warning"]
     assert report["failures"] == []
 
     md = render_validation_report_markdown(report)
     assert "# OpenDose Validation Report" in md
     assert "## Protocol" in md
+    assert "## External Validation Licensing Note" in md
+    assert "## CI/CD Cloud Billing Note" in md
     assert "## Limitations" in md
 
 

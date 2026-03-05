@@ -28,6 +28,17 @@ def build_validation_report(
     dataset_summary = None
     internal = None
     external = None
+    external_validation_licensing_warning = (
+        "Direct one-to-one benchmarking against licensed tools "
+        "(NONMEM/Monolix/Pumas) requires paid licenses. "
+        "Without licenses, external validation is limited to public datasets "
+        "and/or precomputed reference columns."
+    )
+    cloud_cicd_billing_warning = (
+        "Cloud CI/CD execution may be limited by missing billing/credits "
+        "in the selected provider. In that case, local test execution "
+        "is the primary validation path."
+    )
 
     try:
         _, dataset_summary = validate_drug_csv(dataset)
@@ -99,6 +110,8 @@ def build_validation_report(
         "Steady-state metrics assume fixed interval and fixed dose regimen.",
         "Population simulation currently reflects parametric variability assumptions in the model.",
         "External validation requires harmonized concentration units and comparable protocol definitions.",
+        external_validation_licensing_warning,
+        cloud_cicd_billing_warning,
     ]
     reproducibility = {
         "commands": [
@@ -119,6 +132,8 @@ def build_validation_report(
         "protocol": protocol,
         "internal": internal,
         "external": external,
+        "external_validation_licensing_warning": external_validation_licensing_warning,
+        "cloud_cicd_billing_warning": cloud_cicd_billing_warning,
         "limitations": limitations,
         "reproducibility": reproducibility,
         "dataset_summary": dataset_summary,
@@ -180,6 +195,12 @@ def render_validation_report_markdown(report: dict) -> str:
         )
     else:
         lines.append("- External validation not provided.")
+
+    lines.extend(["", "## External Validation Licensing Note"])
+    lines.append(f"- {report['external_validation_licensing_warning']}")
+
+    lines.extend(["", "## CI/CD Cloud Billing Note"])
+    lines.append(f"- {report['cloud_cicd_billing_warning']}")
 
     lines.extend(["", "## Limitations"])
     for item in report.get("limitations", []):

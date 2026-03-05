@@ -33,7 +33,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 - **Population PK fitting (naive pooled)** — estimate typical PK parameters from TDM datasets
 - **Population PK mixed-effects fitting** — estimate fixed effects (theta) and random effects (omega/eta)
 - **Bootstrap uncertainty for population fit** — confidence intervals for F/ka/ke/Vd
-- **External validation toolkit** — compare model predictions with observed and reference-software concentrations
+- **External validation toolkit** — compare model predictions with observed and reference-software concentrations (direct NONMEM/Monolix/Pumas benchmarking requires paid licenses)
 - **Web app baseline** — lightweight local browser interface for quick PK profile exploration
 - **Reproducible validation report** — protocol + metrics + limitations in JSON/Markdown
 - **Release readiness checks** — strict semver/version alignment and asset checks before publishing
@@ -143,6 +143,18 @@ opendose recommend-regimen-window --drug Paracetamol --target-trough-min 0.05 --
 ```
 
 Drug-specific runnable examples are available in `examples/drugs/` (for example, `paracetamol.py` and `ibuprofen.py`).
+
+### External validation licensing note
+
+Direct one-to-one benchmarking against licensed software (NONMEM/Monolix/Pumas)
+requires paid licenses. Without licenses, external validation remains limited to
+public datasets and/or precomputed reference columns (`ref_conc`).
+
+### Cloud CI/CD billing note
+
+If cloud CI/CD billing or credits are unavailable, cloud pipelines may be
+blocked/intermittent. In this scenario, local test execution (`pytest`) is the
+primary validation path until billing is enabled.
 
 ### Generating figures
 

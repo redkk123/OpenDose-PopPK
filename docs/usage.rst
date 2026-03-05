@@ -150,6 +150,10 @@ CLI Multi-Drug Regimen Benchmark
 CLI Environment Check
 ---------------------
 
+.. note::
+   If cloud CI/CD billing/credits are unavailable, local checks/tests are the
+   primary validation path.
+
 .. code-block:: bash
 
     opendose doctor --strict
@@ -212,6 +216,11 @@ CLI Population Mixed-Effects Fit
 
 CLI External Validation
 -----------------------
+
+.. note::
+   Direct one-to-one benchmarking against licensed software
+   (NONMEM/Monolix/Pumas) requires paid licenses. Without licenses, external
+   validation is limited to public datasets and/or precomputed ``ref_conc``.
 
 .. code-block:: bash
 
