@@ -36,6 +36,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 - **External validation toolkit** — compare model predictions with observed and reference-software concentrations
 - **Web app baseline** — lightweight local browser interface for quick PK profile exploration
 - **Reproducible validation report** — protocol + metrics + limitations in JSON/Markdown
+- **Release readiness checks** — strict semver/version alignment and asset checks before publishing
 - **End-to-end TDM workflow command** — run full clinical pipeline in one execution
 - **Multi-drug regimen benchmarking** — compare Cmax/trough/AUC across selected compounds
 - **Mixed-drug TDM fitting** — run MAP fits when a single CSV contains multiple drugs
@@ -89,7 +90,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `192 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `199 passed`.
 
 ### PyPI publishing (maintainers)
 
@@ -128,6 +129,7 @@ opendose init-external-template --output data/external_validation_template.csv
 opendose validate-external --drug Paracetamol --input data/external_validation.csv --predictions-csv output/tables/external_predictions.csv --output-json output/reports/external_validation.json
 opendose web-app --drug Paracetamol --dose 750 --t-end 12 --output-html output/web/web_app.html --dry-run
 opendose validation-report --drug Paracetamol --output-md output/reports/validation_report.md --output-json output/reports/validation_report.json
+opendose release-readiness --repo-root . --output-md output/reports/release_readiness.md --strict
 opendose init-tdm-template --output data/tdm_template.csv
 opendose init-tdm-template --format clinical --output data/tdm_template_clinical.csv
 opendose run-tdm-workflow --drug Paracetamol --input data/tdm.csv --outdir output/workflows/tdm_paracetamol
@@ -139,6 +141,8 @@ opendose recommend-dose --drug Paracetamol --target-cmax 10 --weight 80 --crcl 7
 opendose recommend-regimen-dose --drug Paracetamol --target-trough 1.0 --interval-h 12 --n-doses 4 --output-json output/reports/regimen_dose_recommendation.json
 opendose recommend-regimen-window --drug Paracetamol --target-trough-min 0.05 --target-cmax-max 12.0 --interval-h 12 --n-doses 4 --strategy midpoint --output-json output/reports/regimen_window_recommendation.json
 ```
+
+Drug-specific runnable examples are available in `examples/drugs/` (for example, `paracetamol.py` and `ibuprofen.py`).
 
 ### Generating figures
 

@@ -1015,6 +1015,48 @@ def test_cli_validation_report_strict_failure(capsys):
     assert len(payload["failures"]) >= 1
 
 
+def test_cli_release_readiness(tmp_path, capsys):
+    repo = tmp_path / "repo"
+    (repo / ".github" / "workflows").mkdir(parents=True)
+    (repo / "opendose_poppk").mkdir(parents=True)
+    (repo / "examples" / "drugs").mkdir(parents=True)
+
+    (repo / "README.md").write_text("# Demo\n", encoding="utf-8")
+    (repo / "LICENSE").write_text("MIT\n", encoding="utf-8")
+    (repo / "pyproject.toml").write_text('[project]\nname="x"\nversion = "1.0.0"\n', encoding="utf-8")
+    (repo / "opendose_poppk" / "__init__.py").write_text('__version__ = "1.0.0"\n', encoding="utf-8")
+    (repo / ".github" / "workflows" / "release.yml").write_text("name: release\n", encoding="utf-8")
+    (repo / "examples" / "drugs" / "a.py").write_text("print('a')\n", encoding="utf-8")
+    (repo / "examples" / "drugs" / "b.py").write_text("print('b')\n", encoding="utf-8")
+
+    out_md = tmp_path / "release_readiness.md"
+    code = main(["release-readiness", "--repo-root", str(repo), "--output-md", str(out_md)])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "release-readiness"
+    assert payload["ready"] is True
+    assert payload["output_md"] == str(out_md)
+    assert out_md.exists()
+
+
+def test_cli_release_readiness_strict_failure(tmp_path, capsys):
+    repo = tmp_path / "repo_bad"
+    repo.mkdir(parents=True)
+    (repo / "README.md").write_text("# Demo\n", encoding="utf-8")
+    (repo / "pyproject.toml").write_text('[project]\nname="x"\nversion = "1.0"\n', encoding="utf-8")
+    (repo / "opendose_poppk").mkdir(parents=True)
+    (repo / "opendose_poppk" / "__init__.py").write_text('__version__ = "2.0.0"\n', encoding="utf-8")
+
+    code = main(["release-readiness", "--repo-root", str(repo), "--strict"])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 1
+    assert payload["command"] == "release-readiness"
+    assert payload["ready"] is False
+    assert len(payload["failures"]) >= 1
+
+
 def test_cli_recommend_dose_cmax(tmp_path, capsys):
     out_json = tmp_path / "dose_cmax.json"
     code = main(

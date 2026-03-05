@@ -33,6 +33,7 @@ from .external_validation import (
 )
 from .web_app import build_web_app_payload, render_web_app_html, run_web_app_server, write_web_app_html
 from .validation_report import build_validation_report, render_validation_report_markdown
+from .release_tools import build_release_readiness_report, is_strict_semver, render_release_readiness_markdown
 from .benchmark import benchmark_regimen_across_drugs, write_benchmark_csv
 from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cmax
 from .dose_sweep import sweep_dose_response
@@ -92,6 +93,9 @@ __all__ = [
     "run_web_app_server",
     "build_validation_report",
     "render_validation_report_markdown",
+    "is_strict_semver",
+    "build_release_readiness_report",
+    "render_release_readiness_markdown",
     "benchmark_regimen_across_drugs",
     "write_benchmark_csv",
     "recommend_dose_for_target_auc",

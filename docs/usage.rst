@@ -253,6 +253,16 @@ CLI Validation Report
       --output-md output/reports/validation_report.md \
       --output-json output/reports/validation_report.json
 
+CLI Release Readiness
+---------------------
+
+.. code-block:: bash
+
+    opendose release-readiness \
+      --repo-root . \
+      --output-md output/reports/release_readiness.md \
+      --strict
+
 CLI Dose Recommendation
 -----------------------
 

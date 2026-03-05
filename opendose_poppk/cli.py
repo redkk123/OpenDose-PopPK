@@ -23,6 +23,7 @@ from .external_validation import (
 from .population_fit import bootstrap_population_pk, fit_population_pk
 from .poppk_mixed import eta_table_from_fit, fit_population_mixed_effects
 from .project_report import build_project_report, render_project_report_markdown
+from .release_tools import build_release_readiness_report, render_release_readiness_markdown
 from .regimen import simulate_regimen, summarize_regimen, write_regimen_csv, write_regimen_plot
 from .regimen_dosing import (
     recommend_regimen_dose_for_target_cmax,
@@ -930,6 +931,27 @@ def cmd_validation_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_release_readiness(args: argparse.Namespace) -> int:
+    report = build_release_readiness_report(repo_root=str(args.repo_root))
+
+    output_md = None
+    if args.output_md:
+        out = Path(args.output_md)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(render_release_readiness_markdown(report), encoding="utf-8")
+        output_md = str(out)
+
+    payload = {
+        "command": "release-readiness",
+        "output_md": output_md,
+        **report,
+    }
+    _print_json(payload)
+    if args.strict and report["failures"]:
+        return 1
+    return 0
+
+
 def cmd_recommend_dose(args: argparse.Namespace) -> int:
     if args.target_cmax is None and args.target_auc is None:
         raise ValueError("Provide --target-cmax or --target-auc")
@@ -1360,6 +1382,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_val_report.add_argument("--output-json", default=None, help="Optional JSON report output path")
     p_val_report.add_argument("--strict", action="store_true", help="Exit with code 1 if report contains failures")
     p_val_report.set_defaults(func=cmd_validation_report)
+
+    p_release = sub.add_parser(
+        "release-readiness",
+        help="Check semver/version consistency and release assets readiness",
+    )
+    p_release.add_argument("--repo-root", default=".", help="Repository root path")
+    p_release.add_argument("--output-md", default=None, help="Optional markdown output path")
+    p_release.add_argument("--strict", action="store_true", help="Exit with code 1 if readiness checks fail")
+    p_release.set_defaults(func=cmd_release_readiness)
 
     p_dose = sub.add_parser("recommend-dose", help="Recommend dose to hit target Cmax or AUC")
     p_dose.add_argument("--drug", required=True, help="Drug name from dataset")
