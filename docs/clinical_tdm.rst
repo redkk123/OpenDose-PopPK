@@ -56,6 +56,15 @@ CLI Workflow
       --bootstrap-n 200 \
       --output-json output/reports/population_fit.json
 
+5. Run the full workflow in one command:
+
+.. code-block:: bash
+
+    opendose run-tdm-workflow \
+      --drug Paracetamol \
+      --input data/tdm.csv \
+      --outdir output/workflows/tdm_paracetamol
+
 Programmatic Workflow
 ---------------------
 

@@ -240,6 +240,61 @@ def cmd_init_tdm_template(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_run_tdm_workflow(args: argparse.Namespace) -> int:
+    outdir = Path(args.outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+
+    df = load_tdm_csv(args.input)
+    clean_csv = outdir / "tdm_clean.csv"
+    df.to_csv(clean_csv, index=False)
+
+    db = DrugDatabase(args.dataset)
+    drug = db.get_drug(args.drug)
+    pk = PKModel(**drug.pk_kwargs)
+
+    fit_df = fit_tdm_patients(df, pk=pk, sigma_obs=args.sigma_obs, n_iter=args.n_iter)
+    fit_csv = outdir / "tdm_fit.csv"
+    fit_df.to_csv(fit_csv, index=False)
+
+    pred_df = build_tdm_prediction_table(df=df, fit_df=fit_df)
+    pred_csv = outdir / "tdm_predictions.csv"
+    pred_df.to_csv(pred_csv, index=False)
+    pred_summary = summarize_prediction_table(pred_df)
+
+    report_md = write_tdm_fit_markdown_report(fit_df=fit_df, drug_name=drug.name, output_path=outdir / "tdm_fit_report.md")
+    plot_png = write_tdm_prediction_plot(pred_df=pred_df, output_path=outdir / "tdm_obs_vs_pred.png")
+
+    pop_fit = fit_population_pk(df=df, maxiter=args.maxiter_pop)
+    if args.bootstrap_n > 0:
+        pop_fit["bootstrap"] = bootstrap_population_pk(
+            df=df,
+            n_boot=args.bootstrap_n,
+            seed=args.bootstrap_seed,
+            maxiter=args.maxiter_pop,
+        )
+    pop_json = outdir / "population_fit.json"
+    pop_json.write_text(json.dumps(pop_fit, indent=2, sort_keys=True), encoding="utf-8")
+
+    _print_json(
+        {
+            "command": "run-tdm-workflow",
+            "input": str(args.input),
+            "drug": drug.name,
+            "outdir": str(outdir),
+            "clean_csv": str(clean_csv),
+            "fit_csv": str(fit_csv),
+            "predictions_csv": str(pred_csv),
+            "report_md": str(report_md),
+            "plot_png": str(plot_png),
+            "population_json": str(pop_json),
+            **summarize_tdm(df),
+            **summarize_fit_table(fit_df),
+            **pred_summary,
+        }
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="opendose", description="OpenDose-PopPK CLI")
     parser.add_argument(
@@ -311,6 +366,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_template = sub.add_parser("init-tdm-template", help="Create an empty TDM CSV template")
     p_template.add_argument("--output", required=True, help="Output CSV path")
     p_template.set_defaults(func=cmd_init_tdm_template)
+
+    p_workflow = sub.add_parser("run-tdm-workflow", help="Run end-to-end TDM pipeline in one command")
+    p_workflow.add_argument("--input", required=True, help="Path to TDM CSV")
+    p_workflow.add_argument("--drug", required=True, help="Drug name from dataset")
+    p_workflow.add_argument("--outdir", required=True, help="Output directory for all workflow artifacts")
+    p_workflow.add_argument("--sigma-obs", type=float, default=0.8, help="Observation noise sigma for MAP fitting")
+    p_workflow.add_argument("--n-iter", type=int, default=3000, help="Maximum iterations for patient MAP fitting")
+    p_workflow.add_argument("--maxiter-pop", type=int, default=2000, help="Maximum iterations for population fit")
+    p_workflow.add_argument("--bootstrap-n", type=int, default=0, help="Bootstrap replicates for population fit")
+    p_workflow.add_argument("--bootstrap-seed", type=int, default=42, help="Bootstrap RNG seed")
+    p_workflow.set_defaults(func=cmd_run_tdm_workflow)
 
     return parser
 

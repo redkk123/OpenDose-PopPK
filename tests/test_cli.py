@@ -226,3 +226,48 @@ def test_cli_init_tdm_template(tmp_path, capsys):
     assert code == 0
     assert payload["command"] == "init-tdm-template"
     assert out_csv.exists()
+
+
+def test_cli_run_tdm_workflow(tmp_path, capsys):
+    input_csv = tmp_path / "tdm_workflow.csv"
+    outdir = tmp_path / "workflow_out"
+    input_csv.write_text(
+        "patient_id,time_h,conc,dose_mg,weight\n"
+        "P1,1.0,4.2,1000,80\n"
+        "P1,2.0,6.8,1000,80\n"
+        "P2,1.0,3.1,750,65\n"
+        "P2,2.0,5.0,750,65\n",
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "run-tdm-workflow",
+            "--drug",
+            "Paracetamol",
+            "--input",
+            str(input_csv),
+            "--outdir",
+            str(outdir),
+            "--n-iter",
+            "500",
+            "--maxiter-pop",
+            "500",
+            "--bootstrap-n",
+            "2",
+            "--bootstrap-seed",
+            "13",
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "run-tdm-workflow"
+    assert payload["patients"] == 2
+    assert payload["prediction_rows"] == 4
+    assert Path(payload["clean_csv"]).exists()
+    assert Path(payload["fit_csv"]).exists()
+    assert Path(payload["predictions_csv"]).exists()
+    assert Path(payload["report_md"]).exists()
+    assert Path(payload["plot_png"]).exists()
+    assert Path(payload["population_json"]).exists()
