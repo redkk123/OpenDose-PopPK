@@ -1,6 +1,11 @@
 import pandas as pd
+import pytest
 
-from opendose_poppk import build_tdm_fit_markdown_report, write_tdm_fit_markdown_report
+from opendose_poppk import (
+    build_tdm_fit_markdown_report,
+    write_tdm_fit_markdown_report,
+    write_tdm_prediction_plot,
+)
 
 
 def test_build_tdm_fit_markdown_report_with_rows():
@@ -43,3 +48,24 @@ def test_write_tdm_fit_markdown_report(tmp_path):
     assert out.exists()
     assert str(out) == path
     assert "TDM MAP Fit Report - DrugX" in out.read_text(encoding="utf-8")
+
+
+def test_write_tdm_prediction_plot(tmp_path):
+    pred_df = pd.DataFrame(
+        {
+            "obs_conc": [1.0, 2.0, 3.0],
+            "pred_conc": [0.9, 2.1, 2.8],
+        }
+    )
+    out = tmp_path / "pred_plot.png"
+    path = write_tdm_prediction_plot(pred_df, out, title="Test Plot")
+    assert out.exists()
+    assert str(out) == path
+
+
+def test_write_tdm_prediction_plot_validation(tmp_path):
+    with pytest.raises(ValueError, match="Prediction table is empty"):
+        write_tdm_prediction_plot(pd.DataFrame(), tmp_path / "x.png")
+
+    with pytest.raises(ValueError, match="missing columns"):
+        write_tdm_prediction_plot(pd.DataFrame({"obs_conc": [1.0]}), tmp_path / "y.png")

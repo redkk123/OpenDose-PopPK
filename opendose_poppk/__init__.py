@@ -16,7 +16,11 @@ from .tdm_fit import (
     summarize_fit_table,
     summarize_prediction_table,
 )
-from .tdm_report import build_tdm_fit_markdown_report, write_tdm_fit_markdown_report
+from .tdm_report import (
+    build_tdm_fit_markdown_report,
+    write_tdm_fit_markdown_report,
+    write_tdm_prediction_plot,
+)
 from .population_fit import fit_population_pk, bootstrap_population_pk
 
 # plotting imports
@@ -45,6 +49,7 @@ __all__ = [
     "summarize_prediction_table",
     "build_tdm_fit_markdown_report",
     "write_tdm_fit_markdown_report",
+    "write_tdm_prediction_plot",
     "fit_population_pk",
     "bootstrap_population_pk",
 

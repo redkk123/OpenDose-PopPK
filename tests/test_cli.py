@@ -131,6 +131,7 @@ def test_cli_fit_tdm(tmp_path, capsys):
     input_csv = tmp_path / "tdm_fit.csv"
     out_csv = tmp_path / "fit_table.csv"
     pred_csv = tmp_path / "predictions.csv"
+    plot_png = tmp_path / "obs_pred.png"
     out_md = tmp_path / "fit_report.md"
     input_csv.write_text(
         "patient_id,time_h,conc,dose_mg,weight\n"
@@ -154,6 +155,8 @@ def test_cli_fit_tdm(tmp_path, capsys):
             str(out_csv),
             "--predictions-csv",
             str(pred_csv),
+            "--plot-png",
+            str(plot_png),
             "--report-md",
             str(out_md),
         ]
@@ -165,8 +168,10 @@ def test_cli_fit_tdm(tmp_path, capsys):
     assert payload["patients"] == 2
     assert out_csv.exists()
     assert pred_csv.exists()
+    assert plot_png.exists()
     assert out_md.exists()
     assert payload["predictions_csv"] == str(pred_csv)
+    assert payload["plot_png"] == str(plot_png)
     assert payload["prediction_rows"] == 4
     assert payload["rmse"] is not None
     assert payload["mae"] is not None

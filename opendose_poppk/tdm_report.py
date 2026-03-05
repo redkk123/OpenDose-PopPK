@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 from .tdm_fit import summarize_fit_table
@@ -48,4 +49,34 @@ def write_tdm_fit_markdown_report(fit_df: pd.DataFrame, drug_name: str, output_p
     out = Path(output_path)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(report, encoding="utf-8")
+    return str(out)
+
+
+def write_tdm_prediction_plot(
+    pred_df: pd.DataFrame, output_path: str | Path, title: str = "Observed vs Predicted"
+) -> str:
+    if pred_df.empty:
+        raise ValueError("Prediction table is empty")
+    required = {"obs_conc", "pred_conc"}
+    missing = required.difference(pred_df.columns)
+    if missing:
+        raise ValueError(f"Prediction table missing columns: {sorted(missing)}")
+
+    x = pred_df["obs_conc"].to_numpy(dtype=float)
+    y = pred_df["pred_conc"].to_numpy(dtype=float)
+    lo = float(min(x.min(), y.min()))
+    hi = float(max(x.max(), y.max()))
+
+    fig, ax = plt.subplots(figsize=(5.0, 4.0))
+    ax.scatter(x, y, alpha=0.8)
+    ax.plot([lo, hi], [lo, hi], linestyle="--")
+    ax.set_xlabel("Observed concentration")
+    ax.set_ylabel("Predicted concentration")
+    ax.set_title(title)
+    ax.grid(alpha=0.2)
+
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out, dpi=150, bbox_inches="tight")
+    plt.close(fig)
     return str(out)

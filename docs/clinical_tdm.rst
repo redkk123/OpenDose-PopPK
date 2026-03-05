@@ -43,6 +43,7 @@ CLI Workflow
       --input output/tables/tdm_clean.csv \
       --output output/tables/tdm_fit.csv \
       --predictions-csv output/tables/tdm_predictions.csv \
+      --plot-png output/figures/tdm_obs_vs_pred.png \
       --report-md output/reports/tdm_fit_report.md
 
 4. Fit naive pooled population PK parameters:

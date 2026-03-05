@@ -17,7 +17,7 @@ from .tdm_fit import (
     summarize_fit_table,
     summarize_prediction_table,
 )
-from .tdm_report import write_tdm_fit_markdown_report
+from .tdm_report import write_tdm_fit_markdown_report, write_tdm_prediction_plot
 
 
 def _default_dataset() -> str:
@@ -160,14 +160,19 @@ def cmd_fit_tdm(args: argparse.Namespace) -> int:
         out.parent.mkdir(parents=True, exist_ok=True)
         fit_df.to_csv(out, index=False)
 
+    pred_df = None
     pred_summary = {}
     predictions_csv = None
-    if args.predictions_csv:
+    plot_png = None
+    if args.predictions_csv or args.plot_png:
         pred_df = build_tdm_prediction_table(df=df, fit_df=fit_df)
-        pred_out = Path(args.predictions_csv)
-        pred_out.parent.mkdir(parents=True, exist_ok=True)
-        pred_df.to_csv(pred_out, index=False)
-        predictions_csv = str(pred_out)
+        if args.predictions_csv:
+            pred_out = Path(args.predictions_csv)
+            pred_out.parent.mkdir(parents=True, exist_ok=True)
+            pred_df.to_csv(pred_out, index=False)
+            predictions_csv = str(pred_out)
+        if args.plot_png:
+            plot_png = write_tdm_prediction_plot(pred_df, args.plot_png)
         pred_summary = summarize_prediction_table(pred_df)
 
     report_md = None
@@ -183,6 +188,7 @@ def cmd_fit_tdm(args: argparse.Namespace) -> int:
             "n_iter": int(args.n_iter),
             "output": str(args.output) if args.output else None,
             "predictions_csv": predictions_csv,
+            "plot_png": plot_png,
             "report_md": report_md,
             **summarize_fit_table(fit_df),
             **pred_summary,
@@ -286,6 +292,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional CSV output path with per-observation predictions and residuals",
     )
+    p_fit_tdm.add_argument("--plot-png", default=None, help="Optional observed-vs-predicted plot path")
     p_fit_tdm.add_argument("--report-md", default=None, help="Optional markdown summary report output path")
     p_fit_tdm.set_defaults(func=cmd_fit_tdm)
 
