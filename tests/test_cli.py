@@ -552,3 +552,67 @@ def test_cli_recommend_regimen_dose_validation(capsys):
     err = capsys.readouterr().err
     assert code == 1
     assert "Use only one target mode" in err
+
+
+def test_cli_recommend_regimen_window_feasible(tmp_path, capsys):
+    out_json = tmp_path / "regimen_window.json"
+    code = main(
+        [
+            "recommend-regimen-window",
+            "--drug",
+            "Paracetamol",
+            "--target-trough-min",
+            "0.05",
+            "--target-cmax-max",
+            "12.0",
+            "--interval-h",
+            "12",
+            "--n-doses",
+            "4",
+            "--strategy",
+            "midpoint",
+            "--weight",
+            "80",
+            "--crcl",
+            "70",
+            "--age",
+            "55",
+            "--sex",
+            "M",
+            "--output-json",
+            str(out_json),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "recommend-regimen-window"
+    assert payload["mode"] == "regimen_window"
+    assert payload["feasible"] is True
+    assert payload["strategy"] == "midpoint"
+    assert payload["dose_lower_bound"] <= payload["recommended_dose"] <= payload["dose_upper_bound"]
+    assert out_json.exists()
+
+
+def test_cli_recommend_regimen_window_infeasible(capsys):
+    code = main(
+        [
+            "recommend-regimen-window",
+            "--drug",
+            "Paracetamol",
+            "--target-trough-min",
+            "5.0",
+            "--target-cmax-max",
+            "6.0",
+            "--interval-h",
+            "12",
+            "--n-doses",
+            "4",
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["mode"] == "regimen_window"
+    assert payload["feasible"] is False
+    assert payload["recommended_dose"] is None

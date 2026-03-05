@@ -31,6 +31,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 - **Mixed-drug TDM fitting** — run MAP fits when a single CSV contains multiple drugs
 - **Dose recommendation engine** — suggest dose for target Cmax/AUC (with covariate adjustment)
 - **Regimen dose recommendation** — suggest repeated-dose amount for target Cmax/trough
+- **Therapeutic-window regimen recommendation** — suggest repeated-dose amount for trough/Cmax window
 - **DrugDatabase** — loads and manages parameters from CSV
 - **Publication-ready figures** — all plots from the companion paper
 
@@ -74,7 +75,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `117 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `121 passed`.
 
 ### CLI
 
@@ -93,6 +94,7 @@ opendose fit-tdm-mixed --input data/tdm_mixed.csv --output output/tables/tdm_mix
 opendose doctor --strict
 opendose recommend-dose --drug Paracetamol --target-cmax 10 --weight 80 --crcl 70 --age 55 --output-json output/reports/dose_recommendation.json
 opendose recommend-regimen-dose --drug Paracetamol --target-trough 1.0 --interval-h 12 --n-doses 4 --output-json output/reports/regimen_dose_recommendation.json
+opendose recommend-regimen-window --drug Paracetamol --target-trough-min 0.05 --target-cmax-max 12.0 --interval-h 12 --n-doses 4 --strategy midpoint --output-json output/reports/regimen_window_recommendation.json
 ```
 
 ### Generating figures

@@ -96,6 +96,20 @@ CLI Regimen Dose Recommendation
       --n-doses 4 \
       --output-json output/reports/regimen_dose_recommendation.json
 
+CLI Regimen Window Recommendation
+---------------------------------
+
+.. code-block:: bash
+
+    opendose recommend-regimen-window \
+      --drug Paracetamol \
+      --target-trough-min 0.05 \
+      --target-cmax-max 12.0 \
+      --interval-h 12 \
+      --n-doses 4 \
+      --strategy midpoint \
+      --output-json output/reports/regimen_window_recommendation.json
+
 Covariate Modelling
 -------------------
 

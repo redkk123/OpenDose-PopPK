@@ -28,6 +28,7 @@ from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cma
 from .regimen_dosing import (
     recommend_regimen_dose_for_target_cmax,
     recommend_regimen_dose_for_target_trough,
+    recommend_regimen_dose_for_target_window,
 )
 from .regimen import simulate_regimen, summarize_regimen, write_regimen_csv, write_regimen_plot
 
@@ -68,6 +69,7 @@ __all__ = [
     "recommend_dose_for_target_cmax",
     "recommend_regimen_dose_for_target_cmax",
     "recommend_regimen_dose_for_target_trough",
+    "recommend_regimen_dose_for_target_window",
     "simulate_regimen",
     "summarize_regimen",
     "write_regimen_csv",
