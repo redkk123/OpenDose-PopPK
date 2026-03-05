@@ -168,6 +168,42 @@ def cmd_simulate_iv(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_simulate_nonlinear(args: argparse.Namespace) -> int:
+    db = DrugDatabase(args.dataset)
+    drug = db.get_drug(args.drug)
+    dose = float(args.dose) if args.dose is not None else float(drug.dose)
+    vmax = float(args.vmax)
+    km = float(args.km)
+    t = np.linspace(0.0, float(args.t_end), int(args.n_points))
+    pk = PKModel(**drug.pk_kwargs)
+    c = pk.concentration_nonlinear(t=t, D=dose, vmax=vmax, km=km)
+
+    output_csv = None
+    if args.output_csv:
+        out = Path(args.output_csv)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        np.savetxt(out, np.column_stack([t, c]), delimiter=",", header="time_h,conc", comments="")
+        output_csv = str(out)
+
+    idx = int(np.nanargmax(c))
+    _print_json(
+        {
+            "command": "simulate-nonlinear",
+            "drug": drug.name,
+            "dose": dose,
+            "vmax": vmax,
+            "km": km,
+            "t_end": float(args.t_end),
+            "n_points": int(args.n_points),
+            "cmax": float(c[idx]),
+            "tmax": float(t[idx]),
+            "auc_0_tend": float(np.trapezoid(c, t)),
+            "output_csv": output_csv,
+        }
+    )
+    return 0
+
+
 def cmd_steady_state(args: argparse.Namespace) -> int:
     db = DrugDatabase(args.dataset)
     drug = db.get_drug(args.drug)
@@ -899,6 +935,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_iv.add_argument("--n-points", type=int, default=400, help="Number of points in profile")
     p_iv.add_argument("--output-csv", default=None, help="Optional output CSV path")
     p_iv.set_defaults(func=cmd_simulate_iv)
+
+    p_nl = sub.add_parser("simulate-nonlinear", help="Simulate one-compartment saturable elimination profile")
+    p_nl.add_argument("--drug", required=True, help="Drug name from dataset")
+    p_nl.add_argument("--dose", type=float, default=None, help="Dose override")
+    p_nl.add_argument("--vmax", type=float, required=True, help="Maximum elimination rate (amount/h)")
+    p_nl.add_argument("--km", type=float, required=True, help="Michaelis-Menten constant (amount/L)")
+    p_nl.add_argument("--t-end", type=float, default=24.0, help="Simulation horizon in hours")
+    p_nl.add_argument("--n-points", type=int, default=400, help="Number of points in profile")
+    p_nl.add_argument("--output-csv", default=None, help="Optional output CSV path")
+    p_nl.set_defaults(func=cmd_simulate_nonlinear)
 
     p_ss = sub.add_parser("steady-state", help="Estimate steady-state metrics from repeated dosing")
     p_ss.add_argument("--drug", required=True, help="Drug name from dataset")

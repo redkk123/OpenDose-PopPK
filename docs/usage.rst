@@ -85,6 +85,18 @@ CLI Steady-State Metrics
       --n-doses 20 \
       --output-csv output/tables/paracetamol_steady_state.csv
 
+CLI Nonlinear PK Simulation
+---------------------------
+
+.. code-block:: bash
+
+    opendose simulate-nonlinear \
+      --drug Paracetamol \
+      --dose 1000 \
+      --vmax 200 \
+      --km 15 \
+      --output-csv output/tables/paracetamol_nonlinear.csv
+
 CLI Cohort Simulation
 ---------------------
 

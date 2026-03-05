@@ -20,6 +20,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 - **Multiple-dose regimen support** — repeated dosing at fixed intervals
 - **IV bolus and infusion simulation** — dedicated intravenous input modes
 - **Steady-state metrics** — Cmax/trough/AUCτ estimation after repeated dosing
+- **Nonlinear PK simulation (Michaelis-Menten)** — saturable elimination profiles
 - **Emax Hill PD model** — sigmoidal pharmacodynamic effects
 - **Monte Carlo simulation** — inter-individual variability with 90% prediction intervals
 - **Covariate modeling** — weight, renal function (CrCl), age, hepatic markers (Power Model)
@@ -84,7 +85,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `156 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `160 passed`.
 
 ### PyPI publishing (maintainers)
 
@@ -106,6 +107,7 @@ opendose list-drugs
 opendose validate-dataset --output-clean output/tables/drugs_parameters_clean.csv
 opendose simulate --drug Paracetamol --n-subjects 200 --t-max 12 --output output/tables/paracetamol_cli.csv
 opendose simulate-iv --drug Paracetamol --mode bolus --dose 1000 --output-csv output/tables/paracetamol_iv_bolus.csv
+opendose simulate-nonlinear --drug Paracetamol --dose 1000 --vmax 200 --km 15 --output-csv output/tables/paracetamol_nonlinear.csv
 opendose steady-state --drug Paracetamol --interval-h 12 --n-doses 20 --output-csv output/tables/paracetamol_steady_state.csv
 opendose init-cohort-template --output data/cohort_template.csv
 opendose simulate-cohort --drug Paracetamol --input data/cohort.csv --output-csv output/tables/cohort_simulation.csv

@@ -134,6 +134,90 @@ class PKModel:
         A1_0 = float(self.F * D)
         return self._solve_concentration_profile(t=t, A1_0=A1_0, A2_0=0.0, infusion_rate_fn=None)
 
+    def concentration_nonlinear(
+        self,
+        t: np.ndarray,
+        D: float = 1000.0,
+        vmax: float = 80.0,
+        km: float = 20.0,
+    ) -> np.ndarray:
+        """
+        Concentration profile with one-compartment Michaelis-Menten elimination.
+
+        This method models saturable elimination:
+            dA/dt = -(vmax * C / (km + C)) - lambda_phys * A
+            C = A / V1
+
+        Parameters
+        ----------
+        t : np.ndarray
+            Time vector in hours.
+        D : float
+            Administered dose/activity.
+        vmax : float
+            Maximum elimination rate (amount/h).
+        km : float
+            Michaelis-Menten constant (amount/L).
+        """
+        if D <= 0:
+            raise ValueError("D must be positive")
+        if vmax <= 0:
+            raise ValueError("vmax must be positive")
+        if km <= 0:
+            raise ValueError("km must be positive")
+
+        t_arr = np.atleast_1d(np.asarray(t, dtype=float))
+        if np.any(t_arr < 0):
+            raise ValueError("Tempos t devem ser não-negativos")
+
+        order = np.argsort(t_arr)
+        t_sorted = t_arr[order]
+        t_unique, inverse = np.unique(t_sorted, return_inverse=True)
+
+        A0 = float(self.F * D)
+        V1 = float(self.V1)
+        vmax = float(vmax)
+        km = float(km)
+        lam = float(self.lambda_phys)
+
+        def rhs(_ti, y):
+            A = max(float(y[0]), 0.0)
+            C = A / V1
+            elim = vmax * C / (km + C)
+            dA = -elim - lam * A
+            return [dA]
+
+        if t_unique.size == 1:
+            if t_unique[0] == 0.0:
+                conc_unique = np.array([A0 / V1], dtype=float)
+            else:
+                sol = solve_ivp(
+                    rhs,
+                    (0.0, float(t_unique[0])),
+                    [A0],
+                    t_eval=[float(t_unique[0])],
+                    vectorized=False,
+                    rtol=1e-6,
+                    atol=1e-8,
+                )
+                conc_unique = sol.y[0] / V1
+        else:
+            sol = solve_ivp(
+                rhs,
+                (0.0, float(t_unique[-1])),
+                [A0],
+                t_eval=t_unique,
+                vectorized=False,
+                rtol=1e-6,
+                atol=1e-8,
+            )
+            conc_unique = sol.y[0] / V1
+
+        conc_sorted = conc_unique[inverse]
+        conc = np.empty_like(conc_sorted)
+        conc[order] = conc_sorted
+        return np.maximum(conc, 0.0)
+
     def concentration_iv_bolus(self, t: np.ndarray, dose: float = 1000.0) -> np.ndarray:
         """
         Concentration profile after an IV bolus in the central compartment.

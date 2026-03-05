@@ -157,6 +157,53 @@ def test_cli_simulate_iv_infusion_missing_duration(capsys):
     assert "Provide --infusion-duration-h" in err
 
 
+def test_cli_simulate_nonlinear(tmp_path, capsys):
+    out_csv = tmp_path / "nonlinear.csv"
+    code = main(
+        [
+            "simulate-nonlinear",
+            "--drug",
+            "Paracetamol",
+            "--dose",
+            "1000",
+            "--vmax",
+            "200",
+            "--km",
+            "15",
+            "--output-csv",
+            str(out_csv),
+        ]
+    )
+    output = capsys.readouterr().out
+    payload = json.loads(output)
+    assert code == 0
+    assert payload["command"] == "simulate-nonlinear"
+    assert payload["drug"] == "Paracetamol"
+    assert payload["dose"] == pytest.approx(1000.0)
+    assert payload["vmax"] == pytest.approx(200.0)
+    assert payload["km"] == pytest.approx(15.0)
+    assert payload["cmax"] > 0
+    assert payload["auc_0_tend"] > 0
+    assert out_csv.exists()
+
+
+def test_cli_simulate_nonlinear_validation(capsys):
+    code = main(
+        [
+            "simulate-nonlinear",
+            "--drug",
+            "Paracetamol",
+            "--vmax",
+            "200",
+            "--km",
+            "0",
+        ]
+    )
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "km must be positive" in err
+
+
 def test_cli_steady_state(tmp_path, capsys):
     out_csv = tmp_path / "steady_state.csv"
     code = main(

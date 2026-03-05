@@ -138,6 +138,37 @@ def test_pkmodel_steady_state_metrics():
         pk.steady_state_metrics(D=100.0, interval_h=8.0, n_doses=10, n_points=2)
 
 
+def test_pkmodel_nonlinear_profile_and_validation():
+    pk = PKModel(F=1.0, ka=1.0, ke=0.2, Vd=20.0, Q=0.0, V2=10.0)
+    t = np.linspace(0.0, 24.0, 121)
+    c = pk.concentration_nonlinear(t, D=100.0, vmax=80.0, km=10.0)
+    assert c.shape == t.shape
+    assert np.all(c >= 0.0)
+    assert c[0] > c[-1]
+    assert pk.concentration_nonlinear(np.array([0.0]), D=100.0, vmax=80.0, km=10.0)[0] == pytest.approx(5.0)
+    assert pk.concentration_nonlinear(np.array([2.0]), D=100.0, vmax=80.0, km=10.0)[0] > 0.0
+
+    with pytest.raises(ValueError, match="D must be positive"):
+        pk.concentration_nonlinear(t, D=0.0, vmax=80.0, km=10.0)
+    with pytest.raises(ValueError, match="vmax must be positive"):
+        pk.concentration_nonlinear(t, D=100.0, vmax=0.0, km=10.0)
+    with pytest.raises(ValueError, match="km must be positive"):
+        pk.concentration_nonlinear(t, D=100.0, vmax=80.0, km=0.0)
+    with pytest.raises(ValueError, match="não-negativos"):
+        pk.concentration_nonlinear(np.array([-1.0, 0.5]), D=100.0, vmax=80.0, km=10.0)
+
+
+def test_pkmodel_nonlinear_low_concentration_matches_linear_limit():
+    pk = PKModel(F=1.0, ka=1.0, ke=0.2, Vd=20.0, Q=0.0, V2=10.0)
+    t = np.linspace(0.0, 24.0, 121)
+    dose = 5.0
+    vmax = 80.0
+    km = 20.0
+    c_linear = pk.concentration(t, D=dose)
+    c_nonlinear = pk.concentration_nonlinear(t, D=dose, vmax=vmax, km=km)
+    assert np.allclose(c_nonlinear, c_linear, rtol=0.10, atol=1e-4)
+
+
 def test_state_space_stable():
     """Test that state-space system is stable (eigenvalues < 0)."""
     pk = PKModel(F=0.8, ka=1.8, ke=0.28, Vd=65.0, Q=10.0, V2=20.0)
