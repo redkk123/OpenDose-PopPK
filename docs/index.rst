@@ -30,6 +30,10 @@ lightweight library.
 
 Latest local validation: March 5, 2026 (Python 3.14.2), ``python -m pytest -q`` -> ``199 passed``.
 
+Test status in docs:
+- CI badge above reflects automated test pipeline status (GitHub Actions).
+- Read the Docs badge reflects documentation build status only.
+
 ----
 
 .. toctree::
