@@ -3,6 +3,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![CI](https://github.com/redkk123/OpenDose-PopPK/actions/workflows/ci.yml/badge.svg)](https://github.com/redkk123/OpenDose-PopPK/actions/workflows/ci.yml)
 [![Docs](https://github.com/redkk123/OpenDose-PopPK/actions/workflows/docs.yml/badge.svg)](https://github.com/redkk123/OpenDose-PopPK/actions/workflows/docs.yml)
+[![Release](https://github.com/redkk123/OpenDose-PopPK/actions/workflows/release.yml/badge.svg)](https://github.com/redkk123/OpenDose-PopPK/actions/workflows/release.yml)
 ![GitHub release](https://img.shields.io/github/v/release/redkk123/OpenDose-PopPK)
 
 # OpenDose-PopPK 🔬💊

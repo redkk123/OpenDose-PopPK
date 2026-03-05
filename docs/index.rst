@@ -16,6 +16,10 @@ lightweight library.
    :target: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/docs.yml
    :alt: Docs Build
 
+.. image:: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/release.yml/badge.svg
+   :target: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/release.yml
+   :alt: Release
+
 .. image:: https://readthedocs.org/projects/opendose-poppk/badge/?version=latest
    :target: https://opendose-poppk.readthedocs.io
    :alt: Docs
