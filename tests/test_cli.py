@@ -197,3 +197,13 @@ def test_cli_fit_population(tmp_path, capsys):
     assert payload["n_obs"] == 4
     assert "params" in payload
     assert out_json.exists()
+
+
+def test_cli_init_tdm_template(tmp_path, capsys):
+    out_csv = tmp_path / "template.csv"
+    code = main(["init-tdm-template", "--output", str(out_csv)])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "init-tdm-template"
+    assert out_csv.exists()

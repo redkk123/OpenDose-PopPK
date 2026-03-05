@@ -66,7 +66,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `80 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `82 passed`.
 
 ### CLI
 
@@ -77,6 +77,7 @@ opendose fit --drug Paracetamol --times 0.5,1,2,4 --obs 4.2,6.8,7.5,5.9 --weight
 opendose validate-tdm --input data/tdm.csv --output-clean output/tables/tdm_clean.csv
 opendose fit-tdm --drug Paracetamol --input data/tdm.csv --output output/tables/tdm_fit.csv --report-md output/reports/tdm_fit_report.md
 opendose fit-population --input data/tdm.csv --maxiter 2000 --output-json output/reports/pop_fit.json
+opendose init-tdm-template --output data/tdm_template.csv
 ```
 
 ### Generating figures

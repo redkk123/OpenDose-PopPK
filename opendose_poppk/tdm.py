@@ -61,3 +61,14 @@ def summarize_tdm(df: pd.DataFrame) -> dict:
         "conc_min": float(df["conc"].min()),
         "conc_max": float(df["conc"].max()),
     }
+
+
+def write_tdm_template_csv(output_path: str | Path) -> str:
+    """
+    Write an empty TDM CSV template with required and optional columns.
+    """
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    header = "patient_id,time_h,conc,dose_mg,weight,crcl,age\n"
+    out.write_text(header, encoding="utf-8")
+    return str(out)

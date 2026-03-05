@@ -10,7 +10,7 @@ import numpy as np
 from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulator
 from .database import DrugDatabase
 from .population_fit import fit_population_pk
-from .tdm import load_tdm_csv, summarize_tdm
+from .tdm import load_tdm_csv, summarize_tdm, write_tdm_template_csv
 from .tdm_fit import fit_tdm_patients, summarize_fit_table
 from .tdm_report import write_tdm_fit_markdown_report
 
@@ -203,6 +203,12 @@ def cmd_fit_population(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_init_tdm_template(args: argparse.Namespace) -> int:
+    path = write_tdm_template_csv(args.output)
+    _print_json({"command": "init-tdm-template", "output": path})
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="opendose", description="OpenDose-PopPK CLI")
     parser.add_argument(
@@ -262,6 +268,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_fit_pop.add_argument("--init-Vd", type=float, default=None, help="Initial guess for Vd")
     p_fit_pop.add_argument("--output-json", default=None, help="Optional JSON output path")
     p_fit_pop.set_defaults(func=cmd_fit_population)
+
+    p_template = sub.add_parser("init-tdm-template", help="Create an empty TDM CSV template")
+    p_template.add_argument("--output", required=True, help="Output CSV path")
+    p_template.set_defaults(func=cmd_init_tdm_template)
 
     return parser
 

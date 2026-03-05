@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from opendose_poppk import load_tdm_csv, summarize_tdm
+from opendose_poppk import load_tdm_csv, summarize_tdm, write_tdm_template_csv
 
 
 def test_load_tdm_csv_and_summary(tmp_path):
@@ -66,3 +66,11 @@ def test_summarize_tdm_empty():
     assert summary["rows"] == 0
     assert summary["patients"] == 0
     assert summary["time_min_h"] is None
+
+
+def test_write_tdm_template_csv(tmp_path):
+    out = tmp_path / "template.csv"
+    path = write_tdm_template_csv(out)
+    assert str(out) == path
+    text = out.read_text(encoding="utf-8")
+    assert text.strip() == "patient_id,time_h,conc,dose_mg,weight,crcl,age"

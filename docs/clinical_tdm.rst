@@ -23,13 +23,19 @@ Optional columns used as covariates when present:
 CLI Workflow
 ------------
 
-1. Validate and clean raw TDM table:
+1. Create an input template:
+
+.. code-block:: bash
+
+    opendose init-tdm-template --output data/tdm_template.csv
+
+2. Validate and clean raw TDM table:
 
 .. code-block:: bash
 
     opendose validate-tdm --input data/tdm.csv --output-clean output/tables/tdm_clean.csv
 
-2. Run MAP fitting for each patient:
+3. Run MAP fitting for each patient:
 
 .. code-block:: bash
 
@@ -38,7 +44,7 @@ CLI Workflow
       --output output/tables/tdm_fit.csv \
       --report-md output/reports/tdm_fit_report.md
 
-3. Fit naive pooled population PK parameters:
+4. Fit naive pooled population PK parameters:
 
 .. code-block:: bash
 
