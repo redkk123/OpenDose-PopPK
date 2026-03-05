@@ -10,6 +10,7 @@ import numpy as np
 
 from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulator
 from .benchmark import benchmark_regimen_across_drugs, write_benchmark_csv
+from .cohort import load_cohort_csv, simulate_cohort, summarize_cohort
 from .database import DrugDatabase, validate_drug_csv
 from .dose_sweep import sweep_dose_response
 from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cmax
@@ -113,6 +114,44 @@ def cmd_simulate(args: argparse.Namespace) -> int:
             "pi90_cmax_low": float(np.max(p5)),
             "pi90_cmax_high": float(np.max(p95)),
             "output": str(args.output) if args.output else None,
+        }
+    )
+    return 0
+
+
+def cmd_simulate_cohort(args: argparse.Namespace) -> int:
+    db = DrugDatabase(args.dataset)
+    drug = db.get_drug(args.drug)
+    pk_template = PKModel(**drug.pk_kwargs)
+    default_dose = float(args.dose) if args.dose is not None else float(drug.dose)
+    df = load_cohort_csv(args.input)
+    out_df = simulate_cohort(
+        df=df,
+        pk_template=pk_template,
+        default_dose=default_dose,
+        t_end=float(args.t_end),
+        n_points=int(args.n_points),
+        include_iiv=bool(args.include_iiv),
+        seed=int(args.seed),
+    )
+
+    output_csv = None
+    if args.output_csv:
+        out = Path(args.output_csv)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out_df.to_csv(out, index=False)
+        output_csv = str(out)
+
+    _print_json(
+        {
+            "command": "simulate-cohort",
+            "input": str(args.input),
+            "drug": drug.name,
+            "default_dose": default_dose,
+            "include_iiv": bool(args.include_iiv),
+            "seed": int(args.seed),
+            "output_csv": output_csv,
+            **summarize_cohort(out_df),
         }
     )
     return 0
@@ -760,6 +799,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_sim.add_argument("--no-pd", action="store_true", help="Disable PD simulation")
     p_sim.add_argument("--output", default=None, help="Optional CSV output path for PK percentiles")
     p_sim.set_defaults(func=cmd_simulate)
+
+    p_cohort = sub.add_parser("simulate-cohort", help="Simulate PK metrics per patient from cohort CSV")
+    p_cohort.add_argument("--input", required=True, help="Path to cohort CSV (requires patient_id column)")
+    p_cohort.add_argument("--drug", required=True, help="Drug name from dataset")
+    p_cohort.add_argument("--dose", type=float, default=None, help="Default dose if cohort row dose is missing")
+    p_cohort.add_argument("--t-end", type=float, default=24.0, help="Simulation horizon in hours")
+    p_cohort.add_argument("--n-points", type=int, default=400, help="Number of points in profile")
+    p_cohort.add_argument("--include-iiv", action="store_true", help="Include inter-individual variability")
+    p_cohort.add_argument("--seed", type=int, default=42, help="Random seed (used when --include-iiv)")
+    p_cohort.add_argument("--output-csv", default=None, help="Optional output CSV path")
+    p_cohort.set_defaults(func=cmd_simulate_cohort)
 
     p_sens = sub.add_parser("sensitivity", help="Run local parameter sensitivity analysis (Cmax/AUC)")
     p_sens.add_argument("--drug", required=True, help="Drug name from dataset")

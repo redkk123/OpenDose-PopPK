@@ -75,6 +75,45 @@ def test_cli_simulate_writes_csv(tmp_path, capsys):
     assert out_csv.read_text(encoding="utf-8").startswith("time,p5,p50,p95")
 
 
+def test_cli_simulate_cohort(tmp_path, capsys):
+    input_csv = tmp_path / "cohort.csv"
+    out_csv = tmp_path / "cohort_out.csv"
+    input_csv.write_text(
+        "patient_id,sex,weight,crcl,age,dose\n"
+        "P1,M,80,70,55,900\n"
+        "P2,F,65,90,40,\n",
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "simulate-cohort",
+            "--drug",
+            "Paracetamol",
+            "--input",
+            str(input_csv),
+            "--output-csv",
+            str(out_csv),
+        ]
+    )
+    output = capsys.readouterr().out
+    payload = json.loads(output)
+    assert code == 0
+    assert payload["command"] == "simulate-cohort"
+    assert payload["drug"] == "Paracetamol"
+    assert payload["patients"] == 2
+    assert out_csv.exists()
+
+
+def test_cli_simulate_cohort_validation(capsys, tmp_path):
+    bad_csv = tmp_path / "bad.csv"
+    bad_csv.write_text("id,sex\nP1,M\n", encoding="utf-8")
+    code = main(["simulate-cohort", "--drug", "Paracetamol", "--input", str(bad_csv)])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "Missing required cohort columns" in err
+
+
 def test_cli_sensitivity(tmp_path, capsys):
     out_csv = tmp_path / "sensitivity.csv"
     code = main(

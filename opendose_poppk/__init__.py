@@ -8,6 +8,7 @@ from .pk_model import PKModel, PDModel
 from .database import DrugDatabase
 from .covariate import CovariateModel
 from .population import PopulationSimulator
+from .cohort import load_cohort_csv, simulate_cohort, summarize_cohort
 from .bayesian import MAPEstimator
 from .tdm import load_tdm_csv, summarize_tdm, write_tdm_template_csv
 from .tdm_fit import (
@@ -51,6 +52,9 @@ __all__ = [
     "DrugDatabase",
     "CovariateModel",
     "PopulationSimulator",
+    "load_cohort_csv",
+    "simulate_cohort",
+    "summarize_cohort",
     "MAPEstimator",
     "load_tdm_csv",
     "summarize_tdm",

@@ -53,6 +53,16 @@ CLI Regimen Simulation
       --output-csv output/tables/paracetamol_regimen.csv \
       --plot-png output/figures/paracetamol_regimen.png
 
+CLI Cohort Simulation
+---------------------
+
+.. code-block:: bash
+
+    opendose simulate-cohort \
+      --drug Paracetamol \
+      --input data/cohort.csv \
+      --output-csv output/tables/cohort_simulation.csv
+
 CLI Sensitivity Analysis
 ------------------------
 
