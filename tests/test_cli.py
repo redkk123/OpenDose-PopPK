@@ -125,3 +125,36 @@ def test_cli_validate_tdm(tmp_path, capsys):
     assert payload["rows"] == 2
     assert payload["patients"] == 2
     assert clean_csv.exists()
+
+
+def test_cli_fit_tdm(tmp_path, capsys):
+    input_csv = tmp_path / "tdm_fit.csv"
+    out_csv = tmp_path / "fit_table.csv"
+    input_csv.write_text(
+        "patient_id,time_h,conc,dose_mg,weight\n"
+        "P1,1.0,4.2,1000,80\n"
+        "P1,2.0,6.8,1000,80\n"
+        "P2,1.0,3.1,750,65\n"
+        "P2,2.0,5.0,750,65\n",
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "fit-tdm",
+            "--drug",
+            "Paracetamol",
+            "--input",
+            str(input_csv),
+            "--n-iter",
+            "500",
+            "--output",
+            str(out_csv),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "fit-tdm"
+    assert payload["patients"] == 2
+    assert out_csv.exists()

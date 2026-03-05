@@ -10,6 +10,7 @@ import numpy as np
 from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulator
 from .database import DrugDatabase
 from .tdm import load_tdm_csv, summarize_tdm
+from .tdm_fit import fit_tdm_patients, summarize_fit_table
 
 
 def _default_dataset() -> str:
@@ -139,6 +140,33 @@ def cmd_validate_tdm(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_fit_tdm(args: argparse.Namespace) -> int:
+    df = load_tdm_csv(args.input)
+    db = DrugDatabase(args.dataset)
+    drug = db.get_drug(args.drug)
+    pk = PKModel(**drug.pk_kwargs)
+
+    fit_df = fit_tdm_patients(df, pk=pk, sigma_obs=args.sigma_obs, n_iter=args.n_iter)
+
+    if args.output:
+        out = Path(args.output)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        fit_df.to_csv(out, index=False)
+
+    _print_json(
+        {
+            "command": "fit-tdm",
+            "input": str(args.input),
+            "drug": drug.name,
+            "sigma_obs": float(args.sigma_obs),
+            "n_iter": int(args.n_iter),
+            "output": str(args.output) if args.output else None,
+            **summarize_fit_table(fit_df),
+        }
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="opendose", description="OpenDose-PopPK CLI")
     parser.add_argument(
@@ -179,6 +207,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_tdm.add_argument("--input", required=True, help="Path to TDM CSV")
     p_tdm.add_argument("--output-clean", default=None, help="Optional path to save cleaned CSV")
     p_tdm.set_defaults(func=cmd_validate_tdm)
+
+    p_fit_tdm = sub.add_parser("fit-tdm", help="Run MAP fit per patient from validated TDM CSV")
+    p_fit_tdm.add_argument("--input", required=True, help="Path to TDM CSV")
+    p_fit_tdm.add_argument("--drug", required=True, help="Drug name from dataset")
+    p_fit_tdm.add_argument("--sigma-obs", type=float, default=0.8, help="Observation noise sigma")
+    p_fit_tdm.add_argument("--n-iter", type=int, default=3000, help="Maximum optimizer iterations")
+    p_fit_tdm.add_argument("--output", default=None, help="Optional CSV output path for patient fit table")
+    p_fit_tdm.set_defaults(func=cmd_fit_tdm)
 
     return parser
 
