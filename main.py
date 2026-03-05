@@ -1,10 +1,10 @@
 """
-main.py — OpenDose-PopPK
+main.py - OpenDose-PopPK
 ========================
-Pipeline principal. Gera todas as figuras do projeto.
+Main pipeline. Generates all project figures.
 
-Uso
----
+Usage
+-----
     python main.py
 """
 
@@ -37,14 +37,14 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)  # Garantir que a pasta existe
 
 def main():
     print("=" * 60)
-    print("  OpenDose-PopPK — Main Pipeline")
+    print("  OpenDose-PopPK - Main Pipeline")
     print("=" * 60)
 
     db = DrugDatabase(CSV_PATH)
     print(f"\nDrugs loaded: {db.list_drugs()}\n")
 
-    # ── Figura 1: Monte Carlo — Paracetamol ──────────────────────────────────
-    print("[1] Monte Carlo simulation — Paracetamol...")
+    # Figure 1: Monte Carlo - Paracetamol
+    print("[1] Monte Carlo simulation - Paracetamol...")
     para = db.get_drug("Paracetamol")
     pk   = PKModel(**para.pk_kwargs)
     pd   = PDModel(para.EC50, para.n_hill)
@@ -58,11 +58,11 @@ def main():
     cmax, tmax = pk.cmax(D=para.dose)
     auc        = pk.auc(D=para.dose)
     ss         = pk.state_space()
-    print(f"   Cmax = {cmax:.2f} µg/mL  at Tmax = {tmax:.2f} h")
-    print(f"   AUC₀→∞ = {auc:.1f} µg·h/mL")
-    print(f"   Eigenvalues: {ss['eigenvalues']}  →  Stable: {ss['is_stable']}")
+    print(f"   Cmax = {cmax:.2f} ug/mL  at Tmax = {tmax:.2f} h")
+    print(f"   AUC0-inf = {auc:.1f} ug*h/mL")
+    print(f"   Eigenvalues: {ss['eigenvalues']}  ->  Stable: {ss['is_stable']}")
 
-    # ── Figura 2: Painel comparativo ─────────────────────────────────────────
+    # Figure 2: Drug comparison panel
     print("\n[2] Drug comparison panel...")
     drug_panel = {name: db.get_drug(name)
                   for name in ["Ibuprofen", "Diazepam", "Metformin", "Amoxicillin"]}
@@ -72,7 +72,7 @@ def main():
                  dpi=150, bbox_inches="tight")
     plt.close(fig2)
 
-    # ── Figura 3: Simulação com covariáveis ──────────────────────────────────
+    # Figure 3: Population simulation with covariates
     print("\n[3] Covariate population simulation...")
     cov = CovariateModel(pk)
     sim = PopulationSimulator(pk, pd, cov, dose=para.dose)
@@ -89,16 +89,16 @@ def main():
     )
 
     ppk = result["percentiles_pk"]
-    print(f"   Median Cmax : {ppk[50].max():.2f} µg/mL")
-    print(f"   PI90  Cmax  : {ppk[5].max():.2f} – {ppk[95].max():.2f} µg/mL")
+    print(f"   Median Cmax : {ppk[50].max():.2f} ug/mL")
+    print(f"   PI90  Cmax  : {ppk[5].max():.2f} - {ppk[95].max():.2f} ug/mL")
 
     fig3 = plot_population_with_covariates(result, para.name, para.dose)
     fig3.savefig(paths.figures("covariate_simulation.png"),
                  dpi=150, bbox_inches="tight")
     plt.close(fig3)
 
-    # ── Figura 4: Estimação MAP ───────────────────────────────────────────────
-    print("\n[4] MAP estimation — individual patient...")
+    # Figure 4: MAP estimation
+    print("\n[4] MAP estimation - individual patient...")
     t_obs  = np.array([0.5, 1.0, 2.0, 4.0, 6.0, 8.0])
     c_obs  = np.array([4.2, 6.8, 7.5, 5.9, 4.1, 2.8])
     patient_covariates = {"weight": 95.0, "crcl": 45.0, "age": 68.0}
@@ -108,7 +108,7 @@ def main():
 
     print(f"   Converged : {res['converged']}")
     print(f"   {'Param':6s}  {'Pop-adj':>12s}  {'MAP':>12s}  {'Eta':>8s}")
-    print("   " + "─" * 46)
+    print("   " + "-" * 46)
     for p in ("Vd", "ke", "ka", "F"):
         print(f"   {p:6s}  {res['pop_adjusted'][p]:12.4f}  "
               f"{res['params_map'][p]:12.4f}  {res['eta_map'][p]:+8.3f}")
@@ -123,11 +123,11 @@ def main():
                  dpi=150, bbox_inches="tight")
     plt.close(fig4)
 
-    print(f"\n✓ Done! All figures saved to: {OUT_DIR}")
+    print(f"\nDone! All figures saved to: {OUT_DIR}")
     for f in sorted(OUT_DIR.iterdir()):
         print(f"   {f.name}")
 
 
 if __name__ == "__main__":
-    print(f"\n📍 Project root: {paths.root}\n")
+    print(f"\nProject root: {paths.root}\n")
     main()

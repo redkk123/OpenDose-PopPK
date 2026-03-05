@@ -12,3 +12,8 @@ env/
 .DS_Store
 Thumbs.db
 *.log
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+output/

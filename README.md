@@ -1,5 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![GitHub release](https://img.shields.io/github/v/release/redkk123/OpenDose-PopPK)
 
@@ -54,7 +54,7 @@ pip install -r requirements.txt
 ### Running tests
 
 ```bash
-
+python -m pytest -q
 ```
 
 On Windows: `make.bat test` or `python -m pytest -q`
@@ -99,7 +99,7 @@ print(f"AUC₀→∞ = {auc:.1f} µg·h/mL")
 
 ---
 
-## � Radioactive Isotope Modeling (Physical Decay)
+## Radioactive Isotope Modeling (Physical Decay)
 
 OpenDose-PopPK supports pharmacokinetic modeling of **radioactive pharmaceuticals** (e.g., Lu-177, I-131, Y-90) by incorporating physical decay of the isotope.
 
@@ -198,7 +198,7 @@ This ensures:
 
 ---
 
-## �💊 Covariate-Adjusted Simulation
+## Covariate-Adjusted Simulation
 
 ```python
 from opendose_poppk import CovariateModel, PopulationSimulator

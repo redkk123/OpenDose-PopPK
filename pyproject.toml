@@ -61,15 +61,6 @@ Repository = "https://github.com/redkk123/OpenDose-PopPK.git"
 [tool.setuptools]
 packages = ["opendose_poppk"]
 
-[tool.pytest.ini_options]
-pythonpath = "."
-testpaths = ["tests"]
-addopts = "-v --strict-markers --cov=opendose_poppk --cov-report=term-missing"
-markers = [
-    "slow: marks tests as slow",
-    "integration: marks tests as integration tests",
-]
-
 [tool.black]
 line-length = 100
 target-version = ["py39", "py310", "py311", "py312"]
