@@ -152,6 +152,35 @@ class PKModel:
         idx = np.nanargmax(C)
         return float(C[idx]), float(t[idx])
 
+    def concentration_multiple_dose(
+        self,
+        t: np.ndarray,
+        D: float = 1000.0,
+        interval_h: float = 8.0,
+        n_doses: int = 3,
+    ) -> np.ndarray:
+        """
+        Concentração para regime de múltiplas doses em intervalos fixos.
+
+        A dose é aplicada nos tempos: 0, interval_h, 2*interval_h, ...
+        """
+        if interval_h <= 0:
+            raise ValueError("interval_h must be positive")
+        if n_doses < 1:
+            raise ValueError("n_doses must be at least 1")
+
+        t_arr = np.atleast_1d(np.asarray(t, dtype=float))
+        if np.any(t_arr < 0):
+            raise ValueError("Tempos t devem ser não-negativos")
+
+        total = np.zeros_like(t_arr, dtype=float)
+        for k in range(n_doses):
+            shifted = t_arr - (k * interval_h)
+            mask = shifted >= 0
+            if np.any(mask):
+                total[mask] += self.concentration(shifted[mask], D=D)
+        return np.maximum(total, 0.0)
+
     def auc(self, D: float = 1000.0) -> float:
         """AUC₀→∞ analítica para modelo linear: AUC = F·D / CL."""
         # Se não há decaimento físico, a expressão analítica é válida

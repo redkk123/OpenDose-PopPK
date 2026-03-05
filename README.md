@@ -15,6 +15,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 ## ✨ Features
 
 - **1-compartment PK model** — first-order analytical solution with state-space formalism
+- **Multiple-dose regimen support** — repeated dosing at fixed intervals
 - **Emax Hill PD model** — sigmoidal pharmacodynamic effects
 - **Monte Carlo simulation** — inter-individual variability with 90% prediction intervals
 - **Covariate modeling** — weight, renal function (CrCl), age, hepatic markers (Power Model)

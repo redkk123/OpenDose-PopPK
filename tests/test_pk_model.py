@@ -63,6 +63,33 @@ def test_pkmodel_concentration_decreases():
     assert C[-1] < C[1]
 
 
+def test_pkmodel_multiple_dose_accumulation():
+    """Multiple-dose regimen should produce higher late concentrations than single dose."""
+    pk = PKModel(F=1.0, ka=0.8, ke=0.1, Vd=25.0, Q=0.0, V2=10.0)
+    t = np.linspace(0, 24, 241)
+    c_single = pk.concentration(t, D=100.0)
+    c_multi = pk.concentration_multiple_dose(t, D=100.0, interval_h=8.0, n_doses=3)
+
+    # After the second and third doses, multi-dose profile should exceed single-dose profile.
+    assert np.max(c_multi[t >= 9.0]) > np.max(c_single[t >= 9.0])
+    assert c_multi.shape == t.shape
+
+
+def test_pkmodel_multiple_dose_validation():
+    """Invalid regimen parameters should raise errors."""
+    pk = PKModel()
+    t = np.array([0.0, 1.0, 2.0])
+
+    with pytest.raises(ValueError, match="interval_h must be positive"):
+        pk.concentration_multiple_dose(t, interval_h=0.0, n_doses=2)
+
+    with pytest.raises(ValueError, match="n_doses must be at least 1"):
+        pk.concentration_multiple_dose(t, interval_h=8.0, n_doses=0)
+
+    with pytest.raises(ValueError, match="não-negativos"):
+        pk.concentration_multiple_dose(np.array([-1.0, 1.0]), interval_h=8.0, n_doses=2)
+
+
 def test_state_space_stable():
     """Test that state-space system is stable (eigenvalues < 0)."""
     pk = PKModel(F=0.8, ka=1.8, ke=0.28, Vd=65.0, Q=10.0, V2=20.0)
