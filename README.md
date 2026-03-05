@@ -34,6 +34,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 - **Dose recommendation engine** — suggest dose for target Cmax/AUC (with covariate adjustment)
 - **Regimen dose recommendation** — suggest repeated-dose amount for target Cmax/trough
 - **Therapeutic-window regimen recommendation** — suggest repeated-dose amount for trough/Cmax window
+- **Local sensitivity analysis** — quantify how PK parameters impact Cmax/AUC
 - **DrugDatabase** — loads and manages parameters from CSV
 - **Publication-ready figures** — all plots from the companion paper
 
@@ -77,7 +78,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `125 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `129 passed`.
 
 ### CLI
 
@@ -85,6 +86,7 @@ Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` ->
 opendose list-drugs
 opendose validate-dataset --output-clean output/tables/drugs_parameters_clean.csv
 opendose simulate --drug Paracetamol --n-subjects 200 --t-max 12 --output output/tables/paracetamol_cli.csv
+opendose sensitivity --drug Paracetamol --dose 1000 --rel-step 0.1 --output-csv output/tables/sensitivity_paracetamol.csv
 opendose simulate-regimen --drug Paracetamol --interval-h 12 --n-doses 4 --output-csv output/tables/paracetamol_regimen.csv --plot-png output/figures/paracetamol_regimen.png
 opendose fit --drug Paracetamol --times 0.5,1,2,4 --obs 4.2,6.8,7.5,5.9 --weight 80 --crcl 70 --age 55
 opendose validate-tdm --input data/tdm.csv --output-clean output/tables/tdm_clean.csv

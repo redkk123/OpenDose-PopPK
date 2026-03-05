@@ -53,6 +53,17 @@ CLI Regimen Simulation
       --output-csv output/tables/paracetamol_regimen.csv \
       --plot-png output/figures/paracetamol_regimen.png
 
+CLI Sensitivity Analysis
+------------------------
+
+.. code-block:: bash
+
+    opendose sensitivity \
+      --drug Paracetamol \
+      --dose 1000 \
+      --rel-step 0.1 \
+      --output-csv output/tables/sensitivity_paracetamol.csv
+
 CLI Multi-Drug Regimen Benchmark
 --------------------------------
 

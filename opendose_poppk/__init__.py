@@ -30,6 +30,7 @@ from .regimen_dosing import (
     recommend_regimen_dose_for_target_trough,
     recommend_regimen_dose_for_target_window,
 )
+from .sensitivity import local_pk_sensitivity
 from .regimen import simulate_regimen, summarize_regimen, write_regimen_csv, write_regimen_plot
 
 # plotting imports
@@ -70,6 +71,7 @@ __all__ = [
     "recommend_regimen_dose_for_target_cmax",
     "recommend_regimen_dose_for_target_trough",
     "recommend_regimen_dose_for_target_window",
+    "local_pk_sensitivity",
     "simulate_regimen",
     "summarize_regimen",
     "write_regimen_csv",

@@ -19,6 +19,7 @@ from .regimen_dosing import (
     recommend_regimen_dose_for_target_trough,
     recommend_regimen_dose_for_target_window,
 )
+from .sensitivity import local_pk_sensitivity
 from .tdm import load_tdm_csv, summarize_tdm, write_tdm_template_csv
 from .tdm_fit import (
     build_tdm_prediction_table,
@@ -110,6 +111,56 @@ def cmd_simulate(args: argparse.Namespace) -> int:
             "pi90_cmax_low": float(np.max(p5)),
             "pi90_cmax_high": float(np.max(p95)),
             "output": str(args.output) if args.output else None,
+        }
+    )
+    return 0
+
+
+def cmd_sensitivity(args: argparse.Namespace) -> int:
+    db = DrugDatabase(args.dataset)
+    drug = db.get_drug(args.drug)
+    dose = args.dose if args.dose is not None else drug.dose
+    pk = PKModel(**drug.pk_kwargs)
+
+    res = local_pk_sensitivity(
+        pk=pk,
+        dose=float(dose),
+        t_end=float(args.t_end),
+        n_points=int(args.n_points),
+        rel_step=float(args.rel_step),
+    )
+
+    output_csv = None
+    if args.output_csv:
+        import csv
+
+        out = Path(args.output_csv)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        fieldnames = [
+            "parameter",
+            "base_value",
+            "minus_value",
+            "plus_value",
+            "cmax_minus",
+            "cmax_plus",
+            "auc_minus",
+            "auc_plus",
+            "sensitivity_cmax",
+            "sensitivity_auc",
+        ]
+        with out.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(res["results"])
+        output_csv = str(out)
+
+    _print_json(
+        {
+            "command": "sensitivity",
+            "drug": drug.name,
+            "dose": float(dose),
+            "output_csv": output_csv,
+            **res,
         }
     )
     return 0
@@ -643,6 +694,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_sim.add_argument("--no-pd", action="store_true", help="Disable PD simulation")
     p_sim.add_argument("--output", default=None, help="Optional CSV output path for PK percentiles")
     p_sim.set_defaults(func=cmd_simulate)
+
+    p_sens = sub.add_parser("sensitivity", help="Run local parameter sensitivity analysis (Cmax/AUC)")
+    p_sens.add_argument("--drug", required=True, help="Drug name from dataset")
+    p_sens.add_argument("--dose", type=float, default=None, help="Dose override")
+    p_sens.add_argument("--t-end", type=float, default=24.0, help="Simulation horizon in hours")
+    p_sens.add_argument("--n-points", type=int, default=400, help="Number of points in profile")
+    p_sens.add_argument("--rel-step", type=float, default=0.10, help="Relative perturbation in (0,1)")
+    p_sens.add_argument("--output-csv", default=None, help="Optional CSV output path for sensitivity table")
+    p_sens.set_defaults(func=cmd_sensitivity)
 
     p_reg = sub.add_parser("simulate-regimen", help="Simulate repeated-dose regimen for one drug")
     p_reg.add_argument("--drug", required=True, help="Drug name from dataset")

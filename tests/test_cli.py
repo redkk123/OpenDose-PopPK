@@ -75,6 +75,43 @@ def test_cli_simulate_writes_csv(tmp_path, capsys):
     assert out_csv.read_text(encoding="utf-8").startswith("time,p5,p50,p95")
 
 
+def test_cli_sensitivity(tmp_path, capsys):
+    out_csv = tmp_path / "sensitivity.csv"
+    code = main(
+        [
+            "sensitivity",
+            "--drug",
+            "Paracetamol",
+            "--dose",
+            "1000",
+            "--t-end",
+            "24",
+            "--n-points",
+            "300",
+            "--rel-step",
+            "0.1",
+            "--output-csv",
+            str(out_csv),
+        ]
+    )
+    output = capsys.readouterr().out
+    payload = json.loads(output)
+    assert code == 0
+    assert payload["command"] == "sensitivity"
+    assert payload["drug"] == "Paracetamol"
+    assert payload["baseline_cmax"] > 0
+    assert payload["baseline_auc"] > 0
+    assert len(payload["results"]) == 4
+    assert out_csv.exists()
+
+
+def test_cli_sensitivity_validation(capsys):
+    code = main(["sensitivity", "--drug", "Paracetamol", "--rel-step", "1.0"])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "rel_step must be in (0, 1)" in err
+
+
 def test_cli_simulate_regimen(tmp_path, capsys):
     out_csv = tmp_path / "regimen.csv"
     out_png = tmp_path / "regimen.png"
