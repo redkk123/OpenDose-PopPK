@@ -20,6 +20,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 - **Monte Carlo simulation** — inter-individual variability with 90% prediction intervals
 - **Covariate modeling** — weight, renal function (CrCl), age, hepatic markers (Power Model)
 - **MAP estimation** — individual Bayesian fitting from sparse observed samples
+- **Clinical TDM input validation** — CSV cleaning and summary for patient observations
 - **DrugDatabase** — loads and manages parameters from CSV
 - **Publication-ready figures** — all plots from the companion paper
 
@@ -63,7 +64,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `60 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `67 passed`.
 
 ### CLI
 
@@ -71,6 +72,7 @@ Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` ->
 opendose list-drugs
 opendose simulate --drug Paracetamol --n-subjects 200 --t-max 12 --output output/tables/paracetamol_cli.csv
 opendose fit --drug Paracetamol --times 0.5,1,2,4 --obs 4.2,6.8,7.5,5.9 --weight 80 --crcl 70 --age 55
+opendose validate-tdm --input data/tdm.csv --output-clean output/tables/tdm_clean.csv
 ```
 
 ### Generating figures

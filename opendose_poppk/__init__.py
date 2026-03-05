@@ -9,6 +9,7 @@ from .database import DrugDatabase
 from .covariate import CovariateModel
 from .population import PopulationSimulator
 from .bayesian import MAPEstimator
+from .tdm import load_tdm_csv, summarize_tdm
 
 # plotting imports
 from .plotting import (
@@ -27,6 +28,8 @@ __all__ = [
     "CovariateModel",
     "PopulationSimulator",
     "MAPEstimator",
+    "load_tdm_csv",
+    "summarize_tdm",
 
     # ADD THESE ↓↓↓
     "plot_monte_carlo",

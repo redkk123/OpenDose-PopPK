@@ -9,6 +9,7 @@ import numpy as np
 
 from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulator
 from .database import DrugDatabase
+from .tdm import load_tdm_csv, summarize_tdm
 
 
 def _default_dataset() -> str:
@@ -121,6 +122,23 @@ def cmd_fit(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_validate_tdm(args: argparse.Namespace) -> int:
+    df = load_tdm_csv(args.input)
+    if args.output_clean:
+        out = Path(args.output_clean)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(out, index=False)
+    _print_json(
+        {
+            "command": "validate-tdm",
+            "input": str(args.input),
+            "output_clean": str(args.output_clean) if args.output_clean else None,
+            **summarize_tdm(df),
+        }
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="opendose", description="OpenDose-PopPK CLI")
     parser.add_argument(
@@ -156,6 +174,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_fit.add_argument("--crcl", type=float, default=None, help="Patient CrCl (mL/min)")
     p_fit.add_argument("--age", type=float, default=None, help="Patient age (years)")
     p_fit.set_defaults(func=cmd_fit)
+
+    p_tdm = sub.add_parser("validate-tdm", help="Validate and summarize TDM CSV input")
+    p_tdm.add_argument("--input", required=True, help="Path to TDM CSV")
+    p_tdm.add_argument("--output-clean", default=None, help="Optional path to save cleaned CSV")
+    p_tdm.set_defaults(func=cmd_validate_tdm)
 
     return parser
 

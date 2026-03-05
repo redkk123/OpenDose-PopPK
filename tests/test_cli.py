@@ -97,3 +97,31 @@ def test_cli_fit_rejects_empty_vectors(capsys):
     err = capsys.readouterr().err
     assert code == 1
     assert "cannot be empty" in err
+
+
+def test_cli_validate_tdm(tmp_path, capsys):
+    input_csv = tmp_path / "tdm.csv"
+    clean_csv = tmp_path / "tdm_clean.csv"
+    input_csv.write_text(
+        "patient_id,time_h,conc,dose_mg\n"
+        "P2,2.0,5.0,750\n"
+        "P1,1.0,4.0,1000\n",
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "validate-tdm",
+            "--input",
+            str(input_csv),
+            "--output-clean",
+            str(clean_csv),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "validate-tdm"
+    assert payload["rows"] == 2
+    assert payload["patients"] == 2
+    assert clean_csv.exists()
