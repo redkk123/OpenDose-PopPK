@@ -10,6 +10,7 @@ import numpy as np
 from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulator
 from .database import DrugDatabase
 from .population_fit import bootstrap_population_pk, fit_population_pk
+from .regimen import simulate_regimen, summarize_regimen, write_regimen_csv, write_regimen_plot
 from .tdm import load_tdm_csv, summarize_tdm, write_tdm_template_csv
 from .tdm_fit import (
     build_tdm_prediction_table,
@@ -81,6 +82,41 @@ def cmd_simulate(args: argparse.Namespace) -> int:
             "pi90_cmax_low": float(np.max(p5)),
             "pi90_cmax_high": float(np.max(p95)),
             "output": str(args.output) if args.output else None,
+        }
+    )
+    return 0
+
+
+def cmd_simulate_regimen(args: argparse.Namespace) -> int:
+    db = DrugDatabase(args.dataset)
+    drug = db.get_drug(args.drug)
+    dose = args.dose if args.dose is not None else drug.dose
+    pk = PKModel(**drug.pk_kwargs)
+
+    result = simulate_regimen(
+        pk=pk,
+        dose=float(dose),
+        interval_h=float(args.interval_h),
+        n_doses=int(args.n_doses),
+        t_end=args.t_end,
+        n_points=int(args.n_points),
+    )
+
+    csv_path = None
+    if args.output_csv:
+        csv_path = write_regimen_csv(result, args.output_csv)
+
+    plot_path = None
+    if args.plot_png:
+        plot_path = write_regimen_plot(result, args.plot_png, title=f"Regimen - {drug.name}")
+
+    _print_json(
+        {
+            "command": "simulate-regimen",
+            "drug": drug.name,
+            "output_csv": csv_path,
+            "plot_png": plot_path,
+            **summarize_regimen(result),
         }
     )
     return 0
@@ -318,6 +354,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_sim.add_argument("--no-pd", action="store_true", help="Disable PD simulation")
     p_sim.add_argument("--output", default=None, help="Optional CSV output path for PK percentiles")
     p_sim.set_defaults(func=cmd_simulate)
+
+    p_reg = sub.add_parser("simulate-regimen", help="Simulate repeated-dose regimen for one drug")
+    p_reg.add_argument("--drug", required=True, help="Drug name from dataset")
+    p_reg.add_argument("--dose", type=float, default=None, help="Dose override")
+    p_reg.add_argument("--interval-h", type=float, required=True, help="Dose interval in hours")
+    p_reg.add_argument("--n-doses", type=int, required=True, help="Number of scheduled doses")
+    p_reg.add_argument("--t-end", type=float, default=None, help="Simulation horizon in hours")
+    p_reg.add_argument("--n-points", type=int, default=400, help="Number of points in profile")
+    p_reg.add_argument("--output-csv", default=None, help="Optional CSV output path")
+    p_reg.add_argument("--plot-png", default=None, help="Optional regimen plot path")
+    p_reg.set_defaults(func=cmd_simulate_regimen)
 
     p_fit = sub.add_parser("fit", help="Run MAP fit for one drug and observed concentrations")
     p_fit.add_argument("--drug", required=True, help="Drug name from dataset")

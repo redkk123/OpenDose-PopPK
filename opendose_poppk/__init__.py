@@ -22,6 +22,7 @@ from .tdm_report import (
     write_tdm_prediction_plot,
 )
 from .population_fit import fit_population_pk, bootstrap_population_pk
+from .regimen import simulate_regimen, summarize_regimen, write_regimen_csv, write_regimen_plot
 
 # plotting imports
 from .plotting import (
@@ -52,6 +53,10 @@ __all__ = [
     "write_tdm_prediction_plot",
     "fit_population_pk",
     "bootstrap_population_pk",
+    "simulate_regimen",
+    "summarize_regimen",
+    "write_regimen_csv",
+    "write_regimen_plot",
 
     # ADD THESE ↓↓↓
     "plot_monte_carlo",

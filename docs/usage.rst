@@ -41,6 +41,18 @@ Multiple-Dose Regimen
     times = np.linspace(0, 48, 400)
     conc = pk.concentration_multiple_dose(times, D=1000.0, interval_h=12.0, n_doses=4)
 
+CLI Regimen Simulation
+----------------------
+
+.. code-block:: bash
+
+    opendose simulate-regimen \
+      --drug Paracetamol \
+      --interval-h 12 \
+      --n-doses 4 \
+      --output-csv output/tables/paracetamol_regimen.csv \
+      --plot-png output/figures/paracetamol_regimen.png
+
 Covariate Modelling
 -------------------
 

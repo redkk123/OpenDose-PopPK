@@ -37,6 +37,37 @@ def test_cli_simulate_writes_csv(tmp_path, capsys):
     assert out_csv.read_text(encoding="utf-8").startswith("time,p5,p50,p95")
 
 
+def test_cli_simulate_regimen(tmp_path, capsys):
+    out_csv = tmp_path / "regimen.csv"
+    out_png = tmp_path / "regimen.png"
+    code = main(
+        [
+            "simulate-regimen",
+            "--drug",
+            "Paracetamol",
+            "--interval-h",
+            "12",
+            "--n-doses",
+            "4",
+            "--n-points",
+            "300",
+            "--output-csv",
+            str(out_csv),
+            "--plot-png",
+            str(out_png),
+        ]
+    )
+    output = capsys.readouterr().out
+    payload = json.loads(output)
+    assert code == 0
+    assert payload["command"] == "simulate-regimen"
+    assert payload["drug"] == "Paracetamol"
+    assert payload["n_doses"] == 4
+    assert payload["n_points"] == 300
+    assert out_csv.exists()
+    assert out_png.exists()
+
+
 def test_cli_fit_returns_json(capsys):
     code = main(
         [
