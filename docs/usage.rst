@@ -198,6 +198,18 @@ CLI TDM Templates
     opendose init-tdm-template --output data/tdm_template.csv
     opendose init-tdm-template --format clinical --output data/tdm_template_clinical.csv
 
+CLI Population Mixed-Effects Fit
+--------------------------------
+
+.. code-block:: bash
+
+    opendose fit-population-mixed \
+      --drug Paracetamol \
+      --input data/tdm.csv \
+      --maxiter 1200 \
+      --eta-csv output/tables/pop_mixed_eta.csv \
+      --output-json output/reports/pop_mixed_fit.json
+
 CLI Dose Recommendation
 -----------------------
 

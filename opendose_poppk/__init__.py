@@ -24,6 +24,7 @@ from .tdm_report import (
     write_tdm_prediction_plot,
 )
 from .population_fit import fit_population_pk, bootstrap_population_pk
+from .poppk_mixed import fit_population_mixed_effects, eta_table_from_fit
 from .benchmark import benchmark_regimen_across_drugs, write_benchmark_csv
 from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cmax
 from .dose_sweep import sweep_dose_response
@@ -71,6 +72,8 @@ __all__ = [
     "write_tdm_prediction_plot",
     "fit_population_pk",
     "bootstrap_population_pk",
+    "fit_population_mixed_effects",
+    "eta_table_from_fit",
     "benchmark_regimen_across_drugs",
     "write_benchmark_csv",
     "recommend_dose_for_target_auc",

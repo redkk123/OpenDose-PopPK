@@ -76,6 +76,17 @@ CLI Workflow
       --bootstrap-n 200 \
       --output-json output/reports/population_fit.json
 
+4b. Fit mixed-effects population PK parameters:
+
+.. code-block:: bash
+
+    opendose fit-population-mixed \
+      --drug Paracetamol \
+      --input output/tables/tdm_clean.csv \
+      --maxiter 1200 \
+      --eta-csv output/tables/pop_mixed_eta.csv \
+      --output-json output/reports/population_fit_mixed.json
+
 5. Run the full workflow in one command:
 
 .. code-block:: bash

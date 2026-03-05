@@ -15,6 +15,7 @@ from .database import DrugDatabase, validate_drug_csv
 from .dose_sweep import sweep_dose_response
 from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cmax
 from .population_fit import bootstrap_population_pk, fit_population_pk
+from .poppk_mixed import eta_table_from_fit, fit_population_mixed_effects
 from .project_report import build_project_report, render_project_report_markdown
 from .regimen import simulate_regimen, summarize_regimen, write_regimen_csv, write_regimen_plot
 from .regimen_dosing import (
@@ -555,6 +556,59 @@ def cmd_fit_population(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_fit_population_mixed(args: argparse.Namespace) -> int:
+    df = load_tdm_csv(args.input)
+    db = DrugDatabase(args.dataset)
+    drug = db.get_drug(args.drug)
+    template_pk = PKModel(**drug.pk_kwargs)
+
+    init_theta = {
+        "ka": float(args.init_ka) if args.init_ka is not None else float(template_pk.ka),
+        "ke": float(args.init_ke) if args.init_ke is not None else float(template_pk.ke),
+        "Vd": float(args.init_Vd) if args.init_Vd is not None else float(template_pk.Vd),
+    }
+    init_omega = {
+        "ka": float(args.omega_ka),
+        "ke": float(args.omega_ke),
+        "Vd": float(args.omega_vd),
+    }
+
+    fit = fit_population_mixed_effects(
+        df=df,
+        pk_template=template_pk,
+        sigma_obs=float(args.sigma_obs),
+        maxiter=int(args.maxiter),
+        init_theta=init_theta,
+        init_omega=init_omega,
+    )
+
+    eta_csv = None
+    eta_df = eta_table_from_fit(fit)
+    if args.eta_csv:
+        out_eta = Path(args.eta_csv)
+        out_eta.parent.mkdir(parents=True, exist_ok=True)
+        eta_df.to_csv(out_eta, index=False)
+        eta_csv = str(out_eta)
+
+    payload = {
+        "command": "fit-population-mixed",
+        "input": str(args.input),
+        "drug": drug.name,
+        "maxiter": int(args.maxiter),
+        "eta_csv": eta_csv,
+        "output_json": str(args.output_json) if args.output_json else None,
+        **fit,
+    }
+
+    if args.output_json:
+        out = Path(args.output_json)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    _print_json(payload)
+    return 0
+
+
 def cmd_init_tdm_template(args: argparse.Namespace) -> int:
     path = write_tdm_template_csv(args.output, template_format=args.format)
     _print_json({"command": "init-tdm-template", "output": path, "format": args.format})
@@ -1057,6 +1111,21 @@ def build_parser() -> argparse.ArgumentParser:
     p_fit_pop.add_argument("--bootstrap-seed", type=int, default=42, help="Bootstrap RNG seed")
     p_fit_pop.add_argument("--output-json", default=None, help="Optional JSON output path")
     p_fit_pop.set_defaults(func=cmd_fit_population)
+
+    p_fit_pop_mixed = sub.add_parser("fit-population-mixed", help="Mixed-effects population PK fit from TDM CSV")
+    p_fit_pop_mixed.add_argument("--input", required=True, help="Path to TDM CSV")
+    p_fit_pop_mixed.add_argument("--drug", required=True, help="Drug name from dataset")
+    p_fit_pop_mixed.add_argument("--sigma-obs", type=float, default=0.8, help="Observation noise sigma")
+    p_fit_pop_mixed.add_argument("--maxiter", type=int, default=1200, help="Maximum optimizer iterations")
+    p_fit_pop_mixed.add_argument("--init-ka", type=float, default=None, help="Initial guess for population ka")
+    p_fit_pop_mixed.add_argument("--init-ke", type=float, default=None, help="Initial guess for population ke")
+    p_fit_pop_mixed.add_argument("--init-Vd", type=float, default=None, help="Initial guess for population Vd")
+    p_fit_pop_mixed.add_argument("--omega-ka", type=float, default=0.30, help="Initial random-effect std for ka")
+    p_fit_pop_mixed.add_argument("--omega-ke", type=float, default=0.30, help="Initial random-effect std for ke")
+    p_fit_pop_mixed.add_argument("--omega-vd", type=float, default=0.30, help="Initial random-effect std for Vd")
+    p_fit_pop_mixed.add_argument("--eta-csv", default=None, help="Optional CSV output path for individual eta table")
+    p_fit_pop_mixed.add_argument("--output-json", default=None, help="Optional JSON output path")
+    p_fit_pop_mixed.set_defaults(func=cmd_fit_population_mixed)
 
     p_template = sub.add_parser("init-tdm-template", help="Create an empty TDM CSV template")
     p_template.add_argument("--output", required=True, help="Output CSV path")

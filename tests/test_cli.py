@@ -602,6 +602,77 @@ def test_cli_fit_population(tmp_path, capsys):
     assert out_json.exists()
 
 
+def test_cli_fit_population_mixed(tmp_path, capsys):
+    input_csv = tmp_path / "tdm_population_mixed.csv"
+    out_json = tmp_path / "pop_mixed.json"
+    out_eta = tmp_path / "pop_mixed_eta.csv"
+    input_csv.write_text(
+        "patient_id,time_h,conc,dose_mg\n"
+        "P1,0.5,4.2,1000\n"
+        "P1,1.0,6.8,1000\n"
+        "P1,2.0,7.1,1000\n"
+        "P2,0.5,2.1,500\n"
+        "P2,1.0,3.4,500\n"
+        "P2,2.0,3.8,500\n",
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "fit-population-mixed",
+            "--drug",
+            "Paracetamol",
+            "--input",
+            str(input_csv),
+            "--maxiter",
+            "120",
+            "--eta-csv",
+            str(out_eta),
+            "--output-json",
+            str(out_json),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "fit-population-mixed"
+    assert payload["drug"] == "Paracetamol"
+    assert payload["n_patients"] == 2
+    assert payload["n_obs"] == 6
+    assert payload["theta"]["ka"] > 0
+    assert payload["omega"]["ke"] > 0
+    assert payload["eta_csv"] == str(out_eta)
+    assert out_eta.exists()
+    assert out_json.exists()
+
+
+def test_cli_fit_population_mixed_validation(capsys, tmp_path):
+    input_csv = tmp_path / "tdm_population_mixed_bad.csv"
+    input_csv.write_text(
+        "patient_id,time_h,conc,dose_mg\n"
+        "P1,0.5,4.2,1000\n"
+        "P1,1.0,6.8,1000\n",
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "fit-population-mixed",
+            "--drug",
+            "Paracetamol",
+            "--input",
+            str(input_csv),
+            "--init-ka",
+            "1.5",
+            "--omega-ke",
+            "0",
+        ]
+    )
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "init_omega[ke] must be positive" in err
+
+
 def test_cli_init_tdm_template(tmp_path, capsys):
     out_csv = tmp_path / "template.csv"
     code = main(["init-tdm-template", "--output", str(out_csv)])
