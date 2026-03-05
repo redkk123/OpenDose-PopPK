@@ -64,6 +64,13 @@ CLI Multi-Drug Regimen Benchmark
       --n-doses 4 \
       --output-csv output/tables/regimen_benchmark.csv
 
+CLI Environment Check
+---------------------
+
+.. code-block:: bash
+
+    opendose doctor --strict
+
 Covariate Modelling
 -------------------
 

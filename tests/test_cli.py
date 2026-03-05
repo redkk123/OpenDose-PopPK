@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import opendose_poppk.cli as cli_mod
 from opendose_poppk.cli import main
 
 
@@ -362,3 +363,38 @@ def test_cli_fit_tdm_mixed(tmp_path, capsys):
     assert payload["patients"] == 2
     assert payload["drugs"] == 2
     assert out_csv.exists()
+
+
+def test_cli_doctor_success(capsys):
+    code = main(["doctor"])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "doctor"
+    assert payload["dataset_ok"] is True
+    assert payload["pk_smoke_ok"] is True
+    assert payload["failures"] == []
+
+
+def test_cli_doctor_strict_failure_with_missing_dataset(capsys):
+    code = main(["--dataset", "missing_file.csv", "doctor", "--strict"])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 1
+    assert payload["command"] == "doctor"
+    assert payload["dataset_ok"] is False
+    assert len(payload["failures"]) >= 1
+
+
+def test_cli_doctor_pk_smoke_failure_non_strict(monkeypatch, capsys):
+    class _BadPK:
+        def concentration(self, t, D=1000.0):
+            raise RuntimeError("pk smoke failed")
+
+    monkeypatch.setattr(cli_mod, "PKModel", _BadPK)
+    code = main(["doctor"])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["pk_smoke_ok"] is False
+    assert any("pk_smoke" in msg for msg in payload["failures"])

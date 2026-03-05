@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import platform
 import sys
 from pathlib import Path
 
@@ -390,6 +391,41 @@ def cmd_fit_tdm_mixed(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_doctor(args: argparse.Namespace) -> int:
+    failures = []
+    dataset_ok = False
+    dataset_drugs = None
+    try:
+        db = DrugDatabase(args.dataset)
+        dataset_drugs = len(db.list_drugs())
+        dataset_ok = True
+    except Exception as exc:
+        failures.append(f"dataset: {exc}")
+
+    pk_ok = False
+    try:
+        pk = PKModel()
+        _ = pk.concentration([0.0, 1.0], D=1000.0)
+        pk_ok = True
+    except Exception as exc:
+        failures.append(f"pk_smoke: {exc}")
+
+    payload = {
+        "command": "doctor",
+        "python_version": platform.python_version(),
+        "platform": platform.platform(),
+        "dataset": str(args.dataset),
+        "dataset_ok": dataset_ok,
+        "dataset_drugs": dataset_drugs,
+        "pk_smoke_ok": pk_ok,
+        "failures": failures,
+    }
+    _print_json(payload)
+    if args.strict and failures:
+        return 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="opendose", description="OpenDose-PopPK CLI")
     parser.add_argument(
@@ -502,6 +538,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_fit_tdm_mixed.add_argument("--n-iter", type=int, default=3000, help="Maximum optimizer iterations")
     p_fit_tdm_mixed.add_argument("--output", default=None, help="Optional output CSV path")
     p_fit_tdm_mixed.set_defaults(func=cmd_fit_tdm_mixed)
+
+    p_doctor = sub.add_parser("doctor", help="Run local environment and dataset health checks")
+    p_doctor.add_argument("--strict", action="store_true", help="Exit with code 1 if any check fails")
+    p_doctor.set_defaults(func=cmd_doctor)
 
     return parser
 
