@@ -53,6 +53,17 @@ CLI Regimen Simulation
       --output-csv output/tables/paracetamol_regimen.csv \
       --plot-png output/figures/paracetamol_regimen.png
 
+CLI Multi-Drug Regimen Benchmark
+--------------------------------
+
+.. code-block:: bash
+
+    opendose benchmark-regimen \
+      --drugs Paracetamol,Ibuprofen,Diazepam \
+      --interval-h 12 \
+      --n-doses 4 \
+      --output-csv output/tables/regimen_benchmark.csv
+
 Covariate Modelling
 -------------------
 

@@ -22,6 +22,7 @@ from .tdm_report import (
     write_tdm_prediction_plot,
 )
 from .population_fit import fit_population_pk, bootstrap_population_pk
+from .benchmark import benchmark_regimen_across_drugs, write_benchmark_csv
 from .regimen import simulate_regimen, summarize_regimen, write_regimen_csv, write_regimen_plot
 
 # plotting imports
@@ -53,6 +54,8 @@ __all__ = [
     "write_tdm_prediction_plot",
     "fit_population_pk",
     "bootstrap_population_pk",
+    "benchmark_regimen_across_drugs",
+    "write_benchmark_csv",
     "simulate_regimen",
     "summarize_regimen",
     "write_regimen_csv",

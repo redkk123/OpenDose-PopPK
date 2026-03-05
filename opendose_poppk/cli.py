@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 
 from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulator
+from .benchmark import benchmark_regimen_across_drugs, write_benchmark_csv
 from .database import DrugDatabase
 from .population_fit import bootstrap_population_pk, fit_population_pk
 from .regimen import simulate_regimen, summarize_regimen, write_regimen_csv, write_regimen_plot
@@ -331,6 +332,34 @@ def cmd_run_tdm_workflow(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_benchmark_regimen(args: argparse.Namespace) -> int:
+    df = benchmark_regimen_across_drugs(
+        dataset=args.dataset,
+        drugs=args.drugs,
+        interval_h=args.interval_h,
+        n_doses=args.n_doses,
+        t_end=args.t_end,
+        n_points=args.n_points,
+        dose_override=args.dose_override,
+    )
+    output_csv = None
+    if args.output_csv:
+        output_csv = write_benchmark_csv(df, args.output_csv)
+
+    top = df.iloc[0].to_dict() if not df.empty else None
+    _print_json(
+        {
+            "command": "benchmark-regimen",
+            "n_drugs": int(df.shape[0]),
+            "interval_h": float(args.interval_h),
+            "n_doses": int(args.n_doses),
+            "output_csv": output_csv,
+            "top_drug_by_cmax": top,
+        }
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="opendose", description="OpenDose-PopPK CLI")
     parser.add_argument(
@@ -424,6 +453,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_workflow.add_argument("--bootstrap-n", type=int, default=0, help="Bootstrap replicates for population fit")
     p_workflow.add_argument("--bootstrap-seed", type=int, default=42, help="Bootstrap RNG seed")
     p_workflow.set_defaults(func=cmd_run_tdm_workflow)
+
+    p_bench = sub.add_parser("benchmark-regimen", help="Compare repeated-dose regimen metrics across drugs")
+    p_bench.add_argument("--drugs", default=None, help="Optional comma-separated drug list")
+    p_bench.add_argument("--interval-h", type=float, default=12.0, help="Dose interval in hours")
+    p_bench.add_argument("--n-doses", type=int, default=4, help="Number of scheduled doses")
+    p_bench.add_argument("--t-end", type=float, default=None, help="Simulation horizon in hours")
+    p_bench.add_argument("--n-points", type=int, default=400, help="Number of points in each profile")
+    p_bench.add_argument("--dose-override", type=float, default=None, help="If set, use same dose for all drugs")
+    p_bench.add_argument("--output-csv", default=None, help="Optional CSV output path for benchmark table")
+    p_bench.set_defaults(func=cmd_benchmark_regimen)
 
     return parser
 

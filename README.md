@@ -27,6 +27,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 - **Population PK fitting (naive pooled)** — estimate typical PK parameters from TDM datasets
 - **Bootstrap uncertainty for population fit** — confidence intervals for F/ka/ke/Vd
 - **End-to-end TDM workflow command** — run full clinical pipeline in one execution
+- **Multi-drug regimen benchmarking** — compare Cmax/trough/AUC across selected compounds
 - **DrugDatabase** — loads and manages parameters from CSV
 - **Publication-ready figures** — all plots from the companion paper
 
@@ -70,7 +71,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `93 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `97 passed`.
 
 ### CLI
 
@@ -84,6 +85,7 @@ opendose fit-tdm --drug Paracetamol --input data/tdm.csv --output output/tables/
 opendose fit-population --input data/tdm.csv --maxiter 2000 --bootstrap-n 200 --output-json output/reports/pop_fit.json
 opendose init-tdm-template --output data/tdm_template.csv
 opendose run-tdm-workflow --drug Paracetamol --input data/tdm.csv --outdir output/workflows/tdm_paracetamol
+opendose benchmark-regimen --drugs Paracetamol,Ibuprofen,Diazepam --interval-h 12 --n-doses 4 --output-csv output/tables/regimen_benchmark.csv
 ```
 
 ### Generating figures

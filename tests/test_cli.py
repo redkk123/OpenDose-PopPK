@@ -302,3 +302,30 @@ def test_cli_run_tdm_workflow(tmp_path, capsys):
     assert Path(payload["report_md"]).exists()
     assert Path(payload["plot_png"]).exists()
     assert Path(payload["population_json"]).exists()
+
+
+def test_cli_benchmark_regimen(tmp_path, capsys):
+    out_csv = tmp_path / "benchmark.csv"
+    code = main(
+        [
+            "benchmark-regimen",
+            "--drugs",
+            "Paracetamol,Ibuprofen",
+            "--interval-h",
+            "12",
+            "--n-doses",
+            "3",
+            "--dose-override",
+            "500",
+            "--output-csv",
+            str(out_csv),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "benchmark-regimen"
+    assert payload["n_drugs"] == 2
+    assert payload["output_csv"] == str(out_csv)
+    assert payload["top_drug_by_cmax"] is not None
+    assert out_csv.exists()
