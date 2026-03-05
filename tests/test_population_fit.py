@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from opendose_poppk import PKModel, fit_population_pk
+from opendose_poppk import PKModel, bootstrap_population_pk, fit_population_pk
 import opendose_poppk.population_fit as population_fit_mod
 
 
@@ -84,3 +84,39 @@ def test_fit_population_pk_penalizes_ka_equal_ke(monkeypatch):
     out = fit_population_pk(df, maxiter=20)
     assert captured["penalty"] == 1e8
     assert out["objective_mse"] == 1e8
+
+
+def test_bootstrap_population_pk_basic():
+    base = PKModel(F=0.8, ka=1.5, ke=0.25, Vd=60.0)
+    times = np.array([0.5, 1.0, 2.0, 4.0, 6.0])
+    conc = base.concentration(times, D=1000.0)
+    df = pd.DataFrame(
+        {
+            "patient_id": ["P1"] * len(times),
+            "time_h": times,
+            "conc": conc,
+            "dose_mg": np.array([1000.0] * len(times)),
+        }
+    )
+
+    res = bootstrap_population_pk(df, n_boot=4, seed=7, maxiter=300)
+    assert res["n_boot"] == 4
+    assert res["seed"] == 7
+    assert 0.0 <= res["success_rate"] <= 1.0
+    assert set(res["params_median"].keys()) == {"F", "ka", "ke", "Vd"}
+    assert set(res["params_ci"].keys()) == {"F", "ka", "ke", "Vd"}
+
+
+def test_bootstrap_population_pk_validation_errors():
+    df = pd.DataFrame(
+        {
+            "patient_id": ["P1"],
+            "time_h": [1.0],
+            "conc": [2.0],
+            "dose_mg": [1000.0],
+        }
+    )
+    with pytest.raises(ValueError, match="n_boot must be at least 1"):
+        bootstrap_population_pk(df, n_boot=0)
+    with pytest.raises(ValueError, match="ci_low and ci_high"):
+        bootstrap_population_pk(df, n_boot=2, ci_low=90.0, ci_high=10.0)

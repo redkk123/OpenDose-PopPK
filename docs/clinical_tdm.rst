@@ -51,6 +51,7 @@ CLI Workflow
     opendose fit-population \
       --input output/tables/tdm_clean.csv \
       --maxiter 2000 \
+      --bootstrap-n 200 \
       --output-json output/reports/population_fit.json
 
 Programmatic Workflow

@@ -12,7 +12,7 @@ from .bayesian import MAPEstimator
 from .tdm import load_tdm_csv, summarize_tdm, write_tdm_template_csv
 from .tdm_fit import fit_tdm_patients, summarize_fit_table
 from .tdm_report import build_tdm_fit_markdown_report, write_tdm_fit_markdown_report
-from .population_fit import fit_population_pk
+from .population_fit import fit_population_pk, bootstrap_population_pk
 
 # plotting imports
 from .plotting import (
@@ -39,6 +39,7 @@ __all__ = [
     "build_tdm_fit_markdown_report",
     "write_tdm_fit_markdown_report",
     "fit_population_pk",
+    "bootstrap_population_pk",
 
     # ADD THESE ↓↓↓
     "plot_monte_carlo",

@@ -186,6 +186,10 @@ def test_cli_fit_population(tmp_path, capsys):
             "500",
             "--init-F",
             "0.7",
+            "--bootstrap-n",
+            "3",
+            "--bootstrap-seed",
+            "11",
             "--output-json",
             str(out_json),
         ]
@@ -196,6 +200,8 @@ def test_cli_fit_population(tmp_path, capsys):
     assert payload["command"] == "fit-population"
     assert payload["n_obs"] == 4
     assert "params" in payload
+    assert "bootstrap" in payload
+    assert payload["bootstrap"]["n_boot"] == 3
     assert out_json.exists()
 
 

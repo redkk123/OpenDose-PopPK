@@ -9,7 +9,7 @@ import numpy as np
 
 from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulator
 from .database import DrugDatabase
-from .population_fit import fit_population_pk
+from .population_fit import bootstrap_population_pk, fit_population_pk
 from .tdm import load_tdm_csv, summarize_tdm, write_tdm_template_csv
 from .tdm_fit import fit_tdm_patients, summarize_fit_table
 from .tdm_report import write_tdm_fit_markdown_report
@@ -185,21 +185,28 @@ def cmd_fit_population(args: argparse.Namespace) -> int:
         }
 
     fit = fit_population_pk(df=df, init=init, maxiter=args.maxiter)
+    payload = {
+        "command": "fit-population",
+        "input": str(args.input),
+        "maxiter": int(args.maxiter),
+        "output_json": str(args.output_json) if args.output_json else None,
+        **fit,
+    }
+    if args.bootstrap_n > 0:
+        payload["bootstrap"] = bootstrap_population_pk(
+            df=df,
+            n_boot=args.bootstrap_n,
+            seed=args.bootstrap_seed,
+            init=init,
+            maxiter=args.maxiter,
+        )
 
     if args.output_json:
         out = Path(args.output_json)
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps(fit, indent=2, sort_keys=True), encoding="utf-8")
+        out.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
-    _print_json(
-        {
-            "command": "fit-population",
-            "input": str(args.input),
-            "maxiter": int(args.maxiter),
-            "output_json": str(args.output_json) if args.output_json else None,
-            **fit,
-        }
-    )
+    _print_json(payload)
     return 0
 
 
@@ -266,6 +273,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_fit_pop.add_argument("--init-ka", type=float, default=None, help="Initial guess for ka")
     p_fit_pop.add_argument("--init-ke", type=float, default=None, help="Initial guess for ke")
     p_fit_pop.add_argument("--init-Vd", type=float, default=None, help="Initial guess for Vd")
+    p_fit_pop.add_argument("--bootstrap-n", type=int, default=0, help="Bootstrap replicates (0 disables)")
+    p_fit_pop.add_argument("--bootstrap-seed", type=int, default=42, help="Bootstrap RNG seed")
     p_fit_pop.add_argument("--output-json", default=None, help="Optional JSON output path")
     p_fit_pop.set_defaults(func=cmd_fit_population)
 
