@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 from opendose_poppk import MAPEstimator, PKModel, CovariateModel
+import opendose_poppk.bayesian as bayesian_mod
 
 
 def test_map_runs():
@@ -97,3 +98,29 @@ def test_map_eta_values():
     # With perfect fit to population model, etas should be close to zero
     eta_values = result["eta_map"].values()
     assert all(abs(eta) < 0.5 for eta in eta_values)
+
+
+def test_map_objective_penalizes_ka_equal_ke(monkeypatch):
+    """Cover the objective penalty branch when ka == ke."""
+    pk = PKModel(F=0.8, ka=0.3, ke=0.3, Vd=65.0)
+    estimator = MAPEstimator(pk=pk)
+
+    captured = {}
+
+    class _FakeResult:
+        x = np.zeros(4)
+        success = True
+        fun = 1e8
+
+    def _fake_minimize(obj, x0, method=None, options=None):
+        captured["obj_at_zero"] = obj(np.zeros(4))
+        return _FakeResult()
+
+    monkeypatch.setattr(bayesian_mod, "minimize", _fake_minimize)
+
+    times = np.array([1.0, 2.0, 4.0])
+    obs = np.array([2.0, 1.5, 1.0])
+    result = estimator.fit(times=times, obs=obs, patient_covariates={}, dose=100.0, n_iter=10)
+
+    assert captured["obj_at_zero"] == 1e8
+    assert result["obj_value"] == 1e8

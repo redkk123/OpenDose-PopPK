@@ -13,7 +13,7 @@ Tests cover:
 
 import numpy as np
 import pytest
-from opendose_poppk import PKModel
+from opendose_poppk import PDModel, PKModel
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -45,6 +45,13 @@ def test_pkmodel_concentration_positive():
     t = np.array([0, 1, 4, 12, 24])
     C = pk.concentration(t, D=100.0)
     assert np.all(C >= 0)
+
+
+def test_pkmodel_concentration_rejects_negative_time():
+    """Negative time points are invalid."""
+    pk = PKModel()
+    with pytest.raises(ValueError, match="não-negativos"):
+        pk.concentration(np.array([-1.0, 1.0]), D=100.0)
 
 
 def test_pkmodel_concentration_decreases():
@@ -222,6 +229,36 @@ def test_unit_consistency_hours_and_liters():
     # Initial concentration should not exceed D/V (conservation)
     C_initial = D / pk.Vd
     assert np.max(C) <= C_initial * 1.01  # Small tolerance for numerical methods
+
+
+def test_simulate_population_handles_ka_close_to_ke():
+    """Cover branch that nudges ke when sampled ka ~= ke."""
+    pk = PKModel(F=1.0, ka=0.2, ke=0.2, Vd=30.0, Q=0.0, V2=10.0)
+    t = np.linspace(0, 6, 30)
+    med, p5, p95 = pk.simulate_population(
+        t, D=200.0, n_subjects=5, cv_ke=0.0, cv_ka=0.0, cv_Vd=0.0, cv_Q=0.0, cv_V2=0.0, seed=1
+    )
+    assert med.shape == t.shape
+    assert p5.shape == t.shape
+    assert p95.shape == t.shape
+
+
+def test_pdmodel_validation_and_ecx_bounds():
+    """Cover EC50 and ec_x validation branches."""
+    with pytest.raises(ValueError, match="EC50"):
+        PDModel(EC50=0.0)
+
+    pd = PDModel(EC50=10.0, n=1.0, Emax=100.0)
+    with pytest.raises(ValueError, match="fraction"):
+        pd.ec_x(0.0)
+    with pytest.raises(ValueError, match="fraction"):
+        pd.ec_x(1.0)
+
+
+def test_pdmodel_ecx_valid_fraction():
+    """Valid ec_x should return finite positive concentration."""
+    pd = PDModel(EC50=10.0, n=1.0, Emax=100.0)
+    assert pd.ec_x(0.5) == pytest.approx(10.0)
 
 
 if __name__ == "__main__":
