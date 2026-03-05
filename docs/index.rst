@@ -8,8 +8,8 @@ providing 1- and 2-compartment PK models, Monte Carlo population simulation,
 covariate modelling, and Bayesian MAP individual estimation — all in a single
 lightweight library.
 
-.. image:: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/tests.yml/badge.svg
-   :target: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/tests.yml
+.. image:: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/ci.yml
    :alt: Tests
 
 .. image:: https://readthedocs.org/projects/opendose-poppk/badge/?version=latest
