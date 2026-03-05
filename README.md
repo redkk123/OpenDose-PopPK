@@ -1,7 +1,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![Tests](https://img.shields.io/badge/tests-local%20passing-brightgreen)
+[![CI](https://github.com/redkk123/OpenDose-PopPK/actions/workflows/ci.yml/badge.svg)](https://github.com/redkk123/OpenDose-PopPK/actions/workflows/ci.yml)
+[![Docs](https://github.com/redkk123/OpenDose-PopPK/actions/workflows/docs.yml/badge.svg)](https://github.com/redkk123/OpenDose-PopPK/actions/workflows/docs.yml)
 ![GitHub release](https://img.shields.io/github/v/release/redkk123/OpenDose-PopPK)
 
 # OpenDose-PopPK 🔬💊
@@ -317,7 +318,7 @@ OpenDose-PopPK/
 
 ## 📚 Documentation
 
-Full documentation is available at [opendose-poppk.readthedocs.io](https://opendose-poppk.readthedocs.io) or build locally:
+Full documentation is available at [opendose-poppk.readthedocs.io](https://opendose-poppk.readthedocs.io), [GitHub Pages](https://redkk123.github.io/OpenDose-PopPK/), or build locally:
 
 ```bash
 pip install -e ".[docs]"

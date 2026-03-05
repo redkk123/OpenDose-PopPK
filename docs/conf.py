@@ -10,8 +10,9 @@ release = '1.0.0'
 
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
-    'nbsphinx',
+    'myst_parser',
 ]
 
 templates_path = ['_templates']
@@ -20,5 +21,4 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
-
-nbsphinx_allow_errors = True
+autosummary_generate = True

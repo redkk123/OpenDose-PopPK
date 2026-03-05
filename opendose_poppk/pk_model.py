@@ -80,19 +80,21 @@ class PKModel:
 
     def concentration(self, t: np.ndarray, D: float = 1000.0) -> np.ndarray:
         """
-        Concentração plasmática C(t).
+        Plasma concentration profile C(t).
 
-        Parâmetros
+        Parameters
         ----------
-                t : array de tempos (h)
-                D : dose/atividade administrada (por exemplo: mg ou MBq)
+        t : np.ndarray
+            Time vector in hours.
+        D : float, optional
+            Administered dose/activity (e.g., mg or MBq).
 
-                Observações de unidades
-                -----------------------
-                - Tempo é esperado em horas (h).
-                - Se `D` representa atividade radioativa (MBq), então `A1`/`A2`
-                    e as concentrações serão em MBq e MBq/L, respectivamente.
-                - `CL` deve estar em L/h, `Q` em L/h, `V1`/`V2` em L.
+        Notes
+        -----
+        - Time is expected in hours.
+        - If ``D`` is radioactive activity (MBq), state variables represent MBq
+          and concentrations represent MBq/L.
+        - ``CL`` and ``Q`` should be provided in L/h; ``V1`` and ``V2`` in L.
         """
         # Integra numericamente o sistema 2-compartimentos (quantidades)
         t = np.atleast_1d(np.asarray(t, dtype=float))
