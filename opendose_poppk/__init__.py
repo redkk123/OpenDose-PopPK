@@ -25,6 +25,7 @@ from .tdm_report import (
 from .population_fit import fit_population_pk, bootstrap_population_pk
 from .benchmark import benchmark_regimen_across_drugs, write_benchmark_csv
 from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cmax
+from .dose_sweep import sweep_dose_response
 from .regimen_dosing import (
     recommend_regimen_dose_for_target_cmax,
     recommend_regimen_dose_for_target_trough,
@@ -69,6 +70,7 @@ __all__ = [
     "write_benchmark_csv",
     "recommend_dose_for_target_auc",
     "recommend_dose_for_target_cmax",
+    "sweep_dose_response",
     "recommend_regimen_dose_for_target_cmax",
     "recommend_regimen_dose_for_target_trough",
     "recommend_regimen_dose_for_target_window",

@@ -64,6 +64,16 @@ CLI Sensitivity Analysis
       --rel-step 0.1 \
       --output-csv output/tables/sensitivity_paracetamol.csv
 
+CLI Dose Sweep
+--------------
+
+.. code-block:: bash
+
+    opendose dose-sweep \
+      --drug Paracetamol \
+      --doses 250,500,750,1000 \
+      --output-csv output/tables/dose_sweep_paracetamol.csv
+
 CLI Multi-Drug Regimen Benchmark
 --------------------------------
 

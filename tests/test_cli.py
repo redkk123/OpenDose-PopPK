@@ -112,6 +112,37 @@ def test_cli_sensitivity_validation(capsys):
     assert "rel_step must be in (0, 1)" in err
 
 
+def test_cli_dose_sweep(tmp_path, capsys):
+    out_csv = tmp_path / "dose_sweep.csv"
+    code = main(
+        [
+            "dose-sweep",
+            "--drug",
+            "Paracetamol",
+            "--doses",
+            "250,500,750,1000",
+            "--output-csv",
+            str(out_csv),
+        ]
+    )
+    output = capsys.readouterr().out
+    payload = json.loads(output)
+    assert code == 0
+    assert payload["command"] == "dose-sweep"
+    assert payload["drug"] == "Paracetamol"
+    assert payload["n_doses"] == 4
+    assert payload["monotonic_cmax"] is True
+    assert payload["monotonic_auc"] is True
+    assert out_csv.exists()
+
+
+def test_cli_dose_sweep_validation(capsys):
+    code = main(["dose-sweep", "--drug", "Paracetamol", "--doses", ",,,"])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "doses cannot be empty" in err
+
+
 def test_cli_simulate_regimen(tmp_path, capsys):
     out_csv = tmp_path / "regimen.csv"
     out_png = tmp_path / "regimen.png"

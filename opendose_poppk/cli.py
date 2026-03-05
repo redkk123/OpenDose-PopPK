@@ -11,6 +11,7 @@ import numpy as np
 from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulator
 from .benchmark import benchmark_regimen_across_drugs, write_benchmark_csv
 from .database import DrugDatabase, validate_drug_csv
+from .dose_sweep import sweep_dose_response
 from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cmax
 from .population_fit import bootstrap_population_pk, fit_population_pk
 from .project_report import build_project_report, render_project_report_markdown
@@ -160,6 +161,42 @@ def cmd_sensitivity(args: argparse.Namespace) -> int:
             "command": "sensitivity",
             "drug": drug.name,
             "dose": float(dose),
+            "output_csv": output_csv,
+            **res,
+        }
+    )
+    return 0
+
+
+def cmd_dose_sweep(args: argparse.Namespace) -> int:
+    doses = _parse_csv_floats(args.doses)
+    db = DrugDatabase(args.dataset)
+    drug = db.get_drug(args.drug)
+    pk = PKModel(**drug.pk_kwargs)
+
+    res = sweep_dose_response(
+        pk=pk,
+        doses=doses,
+        t_end=float(args.t_end),
+        n_points=int(args.n_points),
+    )
+
+    output_csv = None
+    if args.output_csv:
+        import csv
+
+        out = Path(args.output_csv)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with out.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=["dose", "cmax", "auc"])
+            writer.writeheader()
+            writer.writerows(res["rows"])
+        output_csv = str(out)
+
+    _print_json(
+        {
+            "command": "dose-sweep",
+            "drug": drug.name,
             "output_csv": output_csv,
             **res,
         }
@@ -732,6 +769,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_sens.add_argument("--rel-step", type=float, default=0.10, help="Relative perturbation in (0,1)")
     p_sens.add_argument("--output-csv", default=None, help="Optional CSV output path for sensitivity table")
     p_sens.set_defaults(func=cmd_sensitivity)
+
+    p_sweep = sub.add_parser("dose-sweep", help="Sweep multiple doses and compute Cmax/AUC response")
+    p_sweep.add_argument("--drug", required=True, help="Drug name from dataset")
+    p_sweep.add_argument("--doses", required=True, help="Comma-separated doses, e.g. 250,500,750,1000")
+    p_sweep.add_argument("--t-end", type=float, default=24.0, help="Simulation horizon in hours")
+    p_sweep.add_argument("--n-points", type=int, default=400, help="Number of points in profile")
+    p_sweep.add_argument("--output-csv", default=None, help="Optional CSV output path for sweep results")
+    p_sweep.set_defaults(func=cmd_dose_sweep)
 
     p_reg = sub.add_parser("simulate-regimen", help="Simulate repeated-dose regimen for one drug")
     p_reg.add_argument("--drug", required=True, help="Drug name from dataset")
