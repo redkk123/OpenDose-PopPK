@@ -163,3 +163,37 @@ def test_cli_fit_tdm(tmp_path, capsys):
     assert out_csv.exists()
     assert out_md.exists()
     assert payload["report_md"] == str(out_md)
+
+
+def test_cli_fit_population(tmp_path, capsys):
+    input_csv = tmp_path / "tdm_population.csv"
+    out_json = tmp_path / "pop_fit.json"
+    input_csv.write_text(
+        "patient_id,time_h,conc,dose_mg\n"
+        "P1,0.5,4.2,1000\n"
+        "P1,1.0,6.8,1000\n"
+        "P2,0.5,2.1,500\n"
+        "P2,1.0,3.4,500\n",
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "fit-population",
+            "--input",
+            str(input_csv),
+            "--maxiter",
+            "500",
+            "--init-F",
+            "0.7",
+            "--output-json",
+            str(out_json),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "fit-population"
+    assert payload["n_obs"] == 4
+    assert "params" in payload
+    assert out_json.exists()

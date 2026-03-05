@@ -38,6 +38,15 @@ CLI Workflow
       --output output/tables/tdm_fit.csv \
       --report-md output/reports/tdm_fit_report.md
 
+3. Fit naive pooled population PK parameters:
+
+.. code-block:: bash
+
+    opendose fit-population \
+      --input output/tables/tdm_clean.csv \
+      --maxiter 2000 \
+      --output-json output/reports/population_fit.json
+
 Programmatic Workflow
 ---------------------
 

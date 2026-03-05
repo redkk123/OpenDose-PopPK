@@ -9,6 +9,7 @@ import numpy as np
 
 from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulator
 from .database import DrugDatabase
+from .population_fit import fit_population_pk
 from .tdm import load_tdm_csv, summarize_tdm
 from .tdm_fit import fit_tdm_patients, summarize_fit_table
 from .tdm_report import write_tdm_fit_markdown_report
@@ -172,6 +173,36 @@ def cmd_fit_tdm(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_fit_population(args: argparse.Namespace) -> int:
+    df = load_tdm_csv(args.input)
+    init = None
+    if args.init_F is not None or args.init_ka is not None or args.init_ke is not None or args.init_Vd is not None:
+        init = {
+            "F": args.init_F if args.init_F is not None else 0.8,
+            "ka": args.init_ka if args.init_ka is not None else 1.8,
+            "ke": args.init_ke if args.init_ke is not None else 0.28,
+            "Vd": args.init_Vd if args.init_Vd is not None else 65.0,
+        }
+
+    fit = fit_population_pk(df=df, init=init, maxiter=args.maxiter)
+
+    if args.output_json:
+        out = Path(args.output_json)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(fit, indent=2, sort_keys=True), encoding="utf-8")
+
+    _print_json(
+        {
+            "command": "fit-population",
+            "input": str(args.input),
+            "maxiter": int(args.maxiter),
+            "output_json": str(args.output_json) if args.output_json else None,
+            **fit,
+        }
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="opendose", description="OpenDose-PopPK CLI")
     parser.add_argument(
@@ -221,6 +252,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_fit_tdm.add_argument("--output", default=None, help="Optional CSV output path for patient fit table")
     p_fit_tdm.add_argument("--report-md", default=None, help="Optional markdown summary report output path")
     p_fit_tdm.set_defaults(func=cmd_fit_tdm)
+
+    p_fit_pop = sub.add_parser("fit-population", help="Naive pooled population PK fit from TDM CSV")
+    p_fit_pop.add_argument("--input", required=True, help="Path to TDM CSV")
+    p_fit_pop.add_argument("--maxiter", type=int, default=2000, help="Maximum optimizer iterations")
+    p_fit_pop.add_argument("--init-F", type=float, default=None, help="Initial guess for F")
+    p_fit_pop.add_argument("--init-ka", type=float, default=None, help="Initial guess for ka")
+    p_fit_pop.add_argument("--init-ke", type=float, default=None, help="Initial guess for ke")
+    p_fit_pop.add_argument("--init-Vd", type=float, default=None, help="Initial guess for Vd")
+    p_fit_pop.add_argument("--output-json", default=None, help="Optional JSON output path")
+    p_fit_pop.set_defaults(func=cmd_fit_population)
 
     return parser
 
