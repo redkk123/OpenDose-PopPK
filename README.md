@@ -84,6 +84,19 @@ With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-repo
 
 Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `147 passed`.
 
+### PyPI publishing (maintainers)
+
+The release pipeline publishes to PyPI via Trusted Publishing (OIDC) when a tag `v*` is pushed.
+
+1. In PyPI, create (or open) project `opendose-poppk`.
+2. Add a Trusted Publisher with:
+   - Owner: `redkk123`
+   - Repository: `OpenDose-PopPK`
+   - Workflow: `release.yml`
+   - Environment: `pypi`
+3. Bump version in `pyproject.toml` and `opendose_poppk/__init__.py`.
+4. Create and push a tag, e.g. `git tag v1.0.1 && git push origin v1.0.1`.
+
 ### CLI
 
 ```bash

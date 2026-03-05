@@ -44,7 +44,7 @@ Optional dependency groups
    * - ``dev``
      - pytest, pytest-cov, black, flake8, mypy
    * - ``docs``
-     - sphinx, sphinx-rtd-theme, nbsphinx, myst-parser, sphinx-autodoc-typehints
+     - sphinx, sphinx-rtd-theme, myst-parser
    * - ``jupyter``
      - jupyter, ipython, notebook
 
@@ -66,3 +66,16 @@ Building the documentation locally
     cd docs
     make html
     # open docs/_build/html/index.html
+
+Maintainer release workflow (PyPI)
+----------------------------------
+
+PyPI publication is automated by GitHub Actions using Trusted Publishing (OIDC).
+
+1. Configure a Trusted Publisher in PyPI for this repository/workflow:
+   - Owner: ``redkk123``
+   - Repository: ``OpenDose-PopPK``
+   - Workflow: ``release.yml``
+   - Environment: ``pypi``
+2. Bump package version.
+3. Push a tag matching ``v*`` (example: ``v1.0.1``).
