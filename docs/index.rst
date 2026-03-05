@@ -31,6 +31,7 @@ Latest local validation: March 5, 2026 (Python 3.14.2), ``python -m pytest -q`` 
    introduction
    installation
    usage
+   clinical_tdm
 
 .. toctree::
    :maxdepth: 2
