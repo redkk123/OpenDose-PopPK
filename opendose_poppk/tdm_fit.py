@@ -89,3 +89,86 @@ def summarize_fit_table(fit_df: pd.DataFrame) -> dict:
         "converged": converged,
         "convergence_rate": float(converged / total),
     }
+
+
+def build_tdm_prediction_table(df: pd.DataFrame, fit_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Build per-observation predictions/residuals using fitted MAP parameters.
+    """
+    if df.empty:
+        return pd.DataFrame(
+            columns=["patient_id", "time_h", "dose_mg", "obs_conc", "pred_conc", "residual"]
+        )
+
+    required_obs = {"patient_id", "time_h", "conc", "dose_mg"}
+    missing_obs = required_obs.difference(df.columns)
+    if missing_obs:
+        raise ValueError(f"Missing observation columns: {sorted(missing_obs)}")
+
+    required_fit = {"patient_id", "map_F", "map_ka", "map_ke", "map_Vd"}
+    missing_fit = required_fit.difference(fit_df.columns)
+    if missing_fit:
+        raise ValueError(f"Missing fit columns: {sorted(missing_fit)}")
+
+    fit_index = fit_df.copy()
+    fit_index["patient_id"] = fit_index["patient_id"].astype(str)
+    fit_index = fit_index.set_index("patient_id")
+
+    rows = []
+    for patient_id, g in df.groupby("patient_id", sort=True):
+        pid = str(patient_id)
+        if pid not in fit_index.index:
+            raise ValueError(f"Patient '{pid}' not found in fit table")
+        fit_row = fit_index.loc[pid]
+        if isinstance(fit_row, pd.DataFrame):
+            fit_row = fit_row.iloc[0]
+
+        model = PKModel(
+            F=float(fit_row["map_F"]),
+            ka=float(fit_row["map_ka"]),
+            ke=float(fit_row["map_ke"]),
+            Vd=float(fit_row["map_Vd"]),
+        )
+
+        group = g.sort_values("time_h")
+        times = group["time_h"].to_numpy(dtype=float)
+        doses = group["dose_mg"].to_numpy(dtype=float)
+        obs = group["conc"].to_numpy(dtype=float)
+
+        pred = pd.Series(0.0, index=group.index, dtype=float)
+        for dose in pd.unique(doses):
+            mask = doses == dose
+            idx = group.index[mask]
+            t_sel = times[mask]
+            t_unique, inv = pd.unique(t_sel), None
+            # Keep deterministic mapping for repeated time points.
+            t_unique_sorted = pd.Index(t_unique).sort_values().to_numpy(dtype=float)
+            pred_unique = model.concentration(t_unique_sorted, D=float(dose))
+            map_pred = dict(zip(t_unique_sorted.tolist(), pred_unique.tolist()))
+            pred.loc[idx] = [map_pred[float(t)] for t in t_sel]
+
+        residual = obs - pred.to_numpy(dtype=float)
+        for i, (_, row) in enumerate(group.iterrows()):
+            rows.append(
+                {
+                    "patient_id": str(row["patient_id"]),
+                    "time_h": float(row["time_h"]),
+                    "dose_mg": float(row["dose_mg"]),
+                    "obs_conc": float(row["conc"]),
+                    "pred_conc": float(pred.iloc[i]),
+                    "residual": float(residual[i]),
+                }
+            )
+
+    return pd.DataFrame(rows).sort_values(["patient_id", "time_h"]).reset_index(drop=True)
+
+
+def summarize_prediction_table(pred_df: pd.DataFrame) -> dict:
+    if pred_df.empty:
+        return {"prediction_rows": 0, "rmse": None, "mae": None}
+    r = pred_df["residual"].to_numpy(dtype=float)
+    return {
+        "prediction_rows": int(pred_df.shape[0]),
+        "rmse": float((r**2).mean() ** 0.5),
+        "mae": float(abs(r).mean()),
+    }

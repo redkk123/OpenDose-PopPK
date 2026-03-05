@@ -22,6 +22,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 - **MAP estimation** — individual Bayesian fitting from sparse observed samples
 - **Clinical TDM input validation** — CSV cleaning and summary for patient observations
 - **Batch TDM fitting** — MAP estimation per patient from real-world monitoring tables
+- **TDM prediction diagnostics** — per-observation predictions and residual error tables
 - **Population PK fitting (naive pooled)** — estimate typical PK parameters from TDM datasets
 - **Bootstrap uncertainty for population fit** — confidence intervals for F/ka/ke/Vd
 - **DrugDatabase** — loads and manages parameters from CSV
@@ -67,7 +68,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `84 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `86 passed`.
 
 ### CLI
 
@@ -76,7 +77,7 @@ opendose list-drugs
 opendose simulate --drug Paracetamol --n-subjects 200 --t-max 12 --output output/tables/paracetamol_cli.csv
 opendose fit --drug Paracetamol --times 0.5,1,2,4 --obs 4.2,6.8,7.5,5.9 --weight 80 --crcl 70 --age 55
 opendose validate-tdm --input data/tdm.csv --output-clean output/tables/tdm_clean.csv
-opendose fit-tdm --drug Paracetamol --input data/tdm.csv --output output/tables/tdm_fit.csv --report-md output/reports/tdm_fit_report.md
+opendose fit-tdm --drug Paracetamol --input data/tdm.csv --output output/tables/tdm_fit.csv --predictions-csv output/tables/tdm_predictions.csv --report-md output/reports/tdm_fit_report.md
 opendose fit-population --input data/tdm.csv --maxiter 2000 --bootstrap-n 200 --output-json output/reports/pop_fit.json
 opendose init-tdm-template --output data/tdm_template.csv
 ```

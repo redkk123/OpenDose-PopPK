@@ -10,7 +10,12 @@ from .covariate import CovariateModel
 from .population import PopulationSimulator
 from .bayesian import MAPEstimator
 from .tdm import load_tdm_csv, summarize_tdm, write_tdm_template_csv
-from .tdm_fit import fit_tdm_patients, summarize_fit_table
+from .tdm_fit import (
+    build_tdm_prediction_table,
+    fit_tdm_patients,
+    summarize_fit_table,
+    summarize_prediction_table,
+)
 from .tdm_report import build_tdm_fit_markdown_report, write_tdm_fit_markdown_report
 from .population_fit import fit_population_pk, bootstrap_population_pk
 
@@ -36,6 +41,8 @@ __all__ = [
     "write_tdm_template_csv",
     "fit_tdm_patients",
     "summarize_fit_table",
+    "build_tdm_prediction_table",
+    "summarize_prediction_table",
     "build_tdm_fit_markdown_report",
     "write_tdm_fit_markdown_report",
     "fit_population_pk",

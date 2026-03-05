@@ -42,6 +42,7 @@ CLI Workflow
     opendose fit-tdm --drug Paracetamol \
       --input output/tables/tdm_clean.csv \
       --output output/tables/tdm_fit.csv \
+      --predictions-csv output/tables/tdm_predictions.csv \
       --report-md output/reports/tdm_fit_report.md
 
 4. Fit naive pooled population PK parameters:

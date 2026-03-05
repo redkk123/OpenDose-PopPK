@@ -11,7 +11,12 @@ from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulato
 from .database import DrugDatabase
 from .population_fit import bootstrap_population_pk, fit_population_pk
 from .tdm import load_tdm_csv, summarize_tdm, write_tdm_template_csv
-from .tdm_fit import fit_tdm_patients, summarize_fit_table
+from .tdm_fit import (
+    build_tdm_prediction_table,
+    fit_tdm_patients,
+    summarize_fit_table,
+    summarize_prediction_table,
+)
 from .tdm_report import write_tdm_fit_markdown_report
 
 
@@ -154,6 +159,17 @@ def cmd_fit_tdm(args: argparse.Namespace) -> int:
         out = Path(args.output)
         out.parent.mkdir(parents=True, exist_ok=True)
         fit_df.to_csv(out, index=False)
+
+    pred_summary = {}
+    predictions_csv = None
+    if args.predictions_csv:
+        pred_df = build_tdm_prediction_table(df=df, fit_df=fit_df)
+        pred_out = Path(args.predictions_csv)
+        pred_out.parent.mkdir(parents=True, exist_ok=True)
+        pred_df.to_csv(pred_out, index=False)
+        predictions_csv = str(pred_out)
+        pred_summary = summarize_prediction_table(pred_df)
+
     report_md = None
     if args.report_md:
         report_md = write_tdm_fit_markdown_report(fit_df=fit_df, drug_name=drug.name, output_path=args.report_md)
@@ -166,8 +182,10 @@ def cmd_fit_tdm(args: argparse.Namespace) -> int:
             "sigma_obs": float(args.sigma_obs),
             "n_iter": int(args.n_iter),
             "output": str(args.output) if args.output else None,
+            "predictions_csv": predictions_csv,
             "report_md": report_md,
             **summarize_fit_table(fit_df),
+            **pred_summary,
         }
     )
     return 0
@@ -263,6 +281,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_fit_tdm.add_argument("--sigma-obs", type=float, default=0.8, help="Observation noise sigma")
     p_fit_tdm.add_argument("--n-iter", type=int, default=3000, help="Maximum optimizer iterations")
     p_fit_tdm.add_argument("--output", default=None, help="Optional CSV output path for patient fit table")
+    p_fit_tdm.add_argument(
+        "--predictions-csv",
+        default=None,
+        help="Optional CSV output path with per-observation predictions and residuals",
+    )
     p_fit_tdm.add_argument("--report-md", default=None, help="Optional markdown summary report output path")
     p_fit_tdm.set_defaults(func=cmd_fit_tdm)
 
