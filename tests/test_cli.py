@@ -744,6 +744,42 @@ def test_cli_init_external_template(tmp_path, capsys):
     assert out_csv.exists()
 
 
+def test_cli_web_app_dry_run(tmp_path, capsys):
+    out_html = tmp_path / "web_app.html"
+    code = main(
+        [
+            "web-app",
+            "--drug",
+            "Paracetamol",
+            "--dose",
+            "750",
+            "--t-end",
+            "12",
+            "--n-points",
+            "80",
+            "--output-html",
+            str(out_html),
+            "--dry-run",
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "web-app"
+    assert payload["mode"] == "dry-run"
+    assert payload["drug"] == "Paracetamol"
+    assert payload["dose"] == pytest.approx(750.0)
+    assert payload["output_html"] == str(out_html)
+    assert out_html.exists()
+
+
+def test_cli_web_app_validation(capsys):
+    code = main(["web-app", "--drug", "Paracetamol", "--t-end", "0", "--dry-run"])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "t_end must be positive" in err
+
+
 def test_cli_run_tdm_workflow(tmp_path, capsys):
     input_csv = tmp_path / "tdm_workflow.csv"
     outdir = tmp_path / "workflow_out"

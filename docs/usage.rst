@@ -225,6 +225,24 @@ CLI External Validation
       --predictions-csv output/tables/external_predictions.csv \
       --output-json output/reports/external_validation.json
 
+CLI Web App Baseline
+--------------------
+
+.. code-block:: bash
+
+    # Dry-run mode (testable): generates HTML and exits.
+    opendose web-app \
+      --drug Paracetamol \
+      --dose 750 \
+      --t-end 12 \
+      --output-html output/web/web_app.html \
+      --dry-run
+
+.. code-block:: bash
+
+    # Local server mode:
+    opendose web-app --drug Paracetamol --host 127.0.0.1 --port 8000
+
 CLI Dose Recommendation
 -----------------------
 

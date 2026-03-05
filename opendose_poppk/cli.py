@@ -39,6 +39,7 @@ from .tdm_fit import (
 )
 from .tdm_mixed import fit_tdm_mixed_by_drug, summarize_tdm_mixed_fit
 from .tdm_report import write_tdm_fit_markdown_report, write_tdm_prediction_plot
+from .web_app import build_web_app_payload, run_web_app_server, write_web_app_html
 
 
 def _default_dataset() -> str:
@@ -658,6 +659,63 @@ def cmd_init_external_template(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_web_app_server_mode(args: argparse.Namespace, dose: float | None) -> int:  # pragma: no cover
+    if args.output_html:
+        payload = build_web_app_payload(
+            dataset=args.dataset,
+            drug=args.drug,
+            dose=dose,
+            t_end=float(args.t_end),
+            n_points=int(args.n_points),
+        )
+        write_web_app_html(payload, args.output_html)
+    run_web_app_server(
+        dataset=args.dataset,
+        host=str(args.host),
+        port=int(args.port),
+        default_drug=str(args.drug),
+        default_dose=dose,
+        default_t_end=float(args.t_end),
+        default_n_points=int(args.n_points),
+    )
+    return 0
+
+
+def cmd_web_app(args: argparse.Namespace) -> int:
+    dose = float(args.dose) if args.dose is not None else None
+    if args.dry_run:
+        payload = build_web_app_payload(
+            dataset=args.dataset,
+            drug=args.drug,
+            dose=dose,
+            t_end=float(args.t_end),
+            n_points=int(args.n_points),
+        )
+        output_html = None
+        if args.output_html:
+            output_html = write_web_app_html(payload, args.output_html)
+        _print_json(
+            {
+                "command": "web-app",
+                "mode": "dry-run",
+                "drug": payload["drug"],
+                "dose": payload["dose"],
+                "t_end": payload["t_end"],
+                "n_points": payload["n_points"],
+                "cmax": payload["cmax"],
+                "tmax": payload["tmax"],
+                "auc_0_tend": payload["auc_0_tend"],
+                "available_drugs": int(len(payload.get("available_drugs", []))),
+                "output_html": output_html,
+                "host": str(args.host),
+                "port": int(args.port),
+            }
+        )
+        return 0
+
+    return _run_web_app_server_mode(args=args, dose=dose)  # pragma: no cover
+
+
 def cmd_run_tdm_workflow(args: argparse.Namespace) -> int:
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -1193,6 +1251,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_ext_template = sub.add_parser("init-external-template", help="Create an external validation CSV template")
     p_ext_template.add_argument("--output", required=True, help="Output CSV path")
     p_ext_template.set_defaults(func=cmd_init_external_template)
+
+    p_web = sub.add_parser("web-app", help="Run simple local web app baseline")
+    p_web.add_argument("--drug", default="Paracetamol", help="Default drug shown in the web app")
+    p_web.add_argument("--dose", type=float, default=None, help="Default dose; falls back to dataset dose when omitted")
+    p_web.add_argument("--t-end", type=float, default=24.0, help="Default simulation horizon in hours")
+    p_web.add_argument("--n-points", type=int, default=300, help="Default number of points in profile")
+    p_web.add_argument("--host", default="127.0.0.1", help="Bind host for local server")
+    p_web.add_argument("--port", type=int, default=8000, help="Bind port for local server")
+    p_web.add_argument("--output-html", default=None, help="Optional path to write initial web app HTML")
+    p_web.add_argument("--dry-run", action="store_true", help="Generate payload/HTML and exit without starting server")
+    p_web.set_defaults(func=cmd_web_app)
 
     p_workflow = sub.add_parser("run-tdm-workflow", help="Run end-to-end TDM pipeline in one command")
     p_workflow.add_argument("--input", required=True, help="Path to TDM CSV")
