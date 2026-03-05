@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import opendose_poppk.cli as cli_mod
+import pytest
 from opendose_poppk.cli import main
 
 
@@ -398,3 +399,54 @@ def test_cli_doctor_pk_smoke_failure_non_strict(monkeypatch, capsys):
     assert code == 0
     assert payload["pk_smoke_ok"] is False
     assert any("pk_smoke" in msg for msg in payload["failures"])
+
+
+def test_cli_recommend_dose_cmax(tmp_path, capsys):
+    out_json = tmp_path / "dose_cmax.json"
+    code = main(
+        [
+            "recommend-dose",
+            "--drug",
+            "Paracetamol",
+            "--target-cmax",
+            "10",
+            "--weight",
+            "80",
+            "--crcl",
+            "70",
+            "--age",
+            "55",
+            "--sex",
+            "M",
+            "--output-json",
+            str(out_json),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "recommend-dose"
+    assert payload["mode"] == "cmax"
+    assert payload["recommended_dose"] > 0
+    assert out_json.exists()
+
+
+def test_cli_recommend_dose_auc(capsys):
+    code = main(["recommend-dose", "--drug", "Paracetamol", "--target-auc", "50"])
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["mode"] == "auc"
+    assert payload["predicted"] == pytest.approx(50.0, rel=1e-8)
+
+
+def test_cli_recommend_dose_validation_errors(capsys):
+    code = main(["recommend-dose", "--drug", "Paracetamol"])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "Provide --target-cmax or --target-auc" in err
+
+    code = main(["recommend-dose", "--drug", "Paracetamol", "--target-cmax", "10", "--target-auc", "50"])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "Use only one target mode" in err

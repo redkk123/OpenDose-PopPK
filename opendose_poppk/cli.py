@@ -11,6 +11,7 @@ import numpy as np
 from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulator
 from .benchmark import benchmark_regimen_across_drugs, write_benchmark_csv
 from .database import DrugDatabase
+from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cmax
 from .population_fit import bootstrap_population_pk, fit_population_pk
 from .regimen import simulate_regimen, summarize_regimen, write_regimen_csv, write_regimen_plot
 from .tdm import load_tdm_csv, summarize_tdm, write_tdm_template_csv
@@ -426,6 +427,58 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_recommend_dose(args: argparse.Namespace) -> int:
+    if args.target_cmax is None and args.target_auc is None:
+        raise ValueError("Provide --target-cmax or --target-auc")
+    if args.target_cmax is not None and args.target_auc is not None:
+        raise ValueError("Use only one target mode at a time (--target-cmax or --target-auc)")
+
+    db = DrugDatabase(args.dataset)
+    drug = db.get_drug(args.drug)
+    base_pk = PKModel(**drug.pk_kwargs)
+
+    cov_values = {}
+    if args.weight is not None:
+        cov_values["weight"] = float(args.weight)
+    if args.crcl is not None:
+        cov_values["crcl"] = float(args.crcl)
+    if args.age is not None:
+        cov_values["age"] = float(args.age)
+
+    if cov_values:
+        cov = CovariateModel(base_pk)
+        params = cov.individualize(cov_values, sex=args.sex)
+        pk = PKModel(**params)
+    else:
+        params = dict(drug.pk_kwargs)
+        pk = base_pk
+
+    if args.target_cmax is not None:
+        rec = recommend_dose_for_target_cmax(
+            pk=pk,
+            target_cmax=float(args.target_cmax),
+            t_end=float(args.t_end),
+            n_points=int(args.n_points),
+        )
+    else:
+        rec = recommend_dose_for_target_auc(pk=pk, target_auc=float(args.target_auc))
+
+    payload = {
+        "command": "recommend-dose",
+        "drug": drug.name,
+        "sex": args.sex,
+        "covariates": cov_values,
+        "pk_params_used": {k: float(v) for k, v in params.items()},
+        **rec,
+    }
+    if args.output_json:
+        out = Path(args.output_json)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    _print_json(payload)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="opendose", description="OpenDose-PopPK CLI")
     parser.add_argument(
@@ -542,6 +595,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_doctor = sub.add_parser("doctor", help="Run local environment and dataset health checks")
     p_doctor.add_argument("--strict", action="store_true", help="Exit with code 1 if any check fails")
     p_doctor.set_defaults(func=cmd_doctor)
+
+    p_dose = sub.add_parser("recommend-dose", help="Recommend dose to hit target Cmax or AUC")
+    p_dose.add_argument("--drug", required=True, help="Drug name from dataset")
+    p_dose.add_argument("--target-cmax", type=float, default=None, help="Target Cmax")
+    p_dose.add_argument("--target-auc", type=float, default=None, help="Target AUC")
+    p_dose.add_argument("--t-end", type=float, default=24.0, help="Time horizon for Cmax search")
+    p_dose.add_argument("--n-points", type=int, default=1000, help="Number of points for Cmax search")
+    p_dose.add_argument("--weight", type=float, default=None, help="Patient weight (kg)")
+    p_dose.add_argument("--crcl", type=float, default=None, help="Patient CrCl (mL/min)")
+    p_dose.add_argument("--age", type=float, default=None, help="Patient age (years)")
+    p_dose.add_argument("--sex", default="M", help="Patient sex (M/F), used with covariates")
+    p_dose.add_argument("--output-json", default=None, help="Optional JSON output path")
+    p_dose.set_defaults(func=cmd_recommend_dose)
 
     return parser
 

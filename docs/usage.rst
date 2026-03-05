@@ -71,6 +71,19 @@ CLI Environment Check
 
     opendose doctor --strict
 
+CLI Dose Recommendation
+-----------------------
+
+.. code-block:: bash
+
+    opendose recommend-dose \
+      --drug Paracetamol \
+      --target-cmax 10 \
+      --weight 80 \
+      --crcl 70 \
+      --age 55 \
+      --output-json output/reports/dose_recommendation.json
+
 Covariate Modelling
 -------------------
 

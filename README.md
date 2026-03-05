@@ -29,6 +29,7 @@ The library bridges classical compartmental pharmacology and modern control theo
 - **End-to-end TDM workflow command** — run full clinical pipeline in one execution
 - **Multi-drug regimen benchmarking** — compare Cmax/trough/AUC across selected compounds
 - **Mixed-drug TDM fitting** — run MAP fits when a single CSV contains multiple drugs
+- **Dose recommendation engine** — suggest dose for target Cmax/AUC (with covariate adjustment)
 - **DrugDatabase** — loads and manages parameters from CSV
 - **Publication-ready figures** — all plots from the companion paper
 
@@ -72,7 +73,7 @@ On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
 
-Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `104 passed`.
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `110 passed`.
 
 ### CLI
 
@@ -89,6 +90,7 @@ opendose run-tdm-workflow --drug Paracetamol --input data/tdm.csv --outdir outpu
 opendose benchmark-regimen --drugs Paracetamol,Ibuprofen,Diazepam --interval-h 12 --n-doses 4 --output-csv output/tables/regimen_benchmark.csv
 opendose fit-tdm-mixed --input data/tdm_mixed.csv --output output/tables/tdm_mixed_fit.csv
 opendose doctor --strict
+opendose recommend-dose --drug Paracetamol --target-cmax 10 --weight 80 --crcl 70 --age 55 --output-json output/reports/dose_recommendation.json
 ```
 
 ### Generating figures
