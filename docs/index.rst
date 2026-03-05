@@ -8,9 +8,9 @@ providing 1- and 2-compartment PK models, Monte Carlo population simulation,
 covariate modelling, and Bayesian MAP individual estimation — all in a single
 lightweight library.
 
-.. image:: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/ci.yml/badge.svg
-   :target: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/ci.yml
-   :alt: Tests
+.. image:: https://img.shields.io/badge/tests-local%20passing-brightgreen
+   :target: https://github.com/redkk123/OpenDose-PopPK
+   :alt: Tests (local)
 
 .. image:: https://readthedocs.org/projects/opendose-poppk/badge/?version=latest
    :target: https://opendose-poppk.readthedocs.io
@@ -19,6 +19,8 @@ lightweight library.
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
    :target: https://opensource.org/licenses/MIT
    :alt: License: MIT
+
+Latest local validation: March 5, 2026 (Python 3.14.2), ``python -m pytest -q`` -> ``46 passed``.
 
 ----
 

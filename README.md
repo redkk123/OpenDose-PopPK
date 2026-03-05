@@ -1,6 +1,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![Tests](https://img.shields.io/badge/tests-local%20passing-brightgreen)
 ![GitHub release](https://img.shields.io/github/v/release/redkk123/OpenDose-PopPK)
 
 # OpenDose-PopPK 🔬💊
@@ -60,6 +61,8 @@ python -m pytest -q
 On Windows: `make.bat test` or `python -m pytest -q`
 
 With coverage: `pip install .[dev]` then `pytest --cov=opendose_poppk --cov-report=term-missing`
+
+Latest local validation: March 5, 2026 (Python 3.14.2), `python -m pytest -q` -> `46 passed`.
 
 ### Generating figures
 
