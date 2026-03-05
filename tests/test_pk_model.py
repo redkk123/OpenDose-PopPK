@@ -90,6 +90,54 @@ def test_pkmodel_multiple_dose_validation():
         pk.concentration_multiple_dose(np.array([-1.0, 1.0]), interval_h=8.0, n_doses=2)
 
 
+def test_pkmodel_iv_bolus_ignores_bioavailability_factor():
+    pk = PKModel(F=0.5, ka=1.0, ke=0.1, Vd=20.0, Q=0.0, V2=10.0)
+    t = np.array([0.0, 1.0, 4.0])
+    c_oral_like = pk.concentration(t, D=100.0)
+    c_iv = pk.concentration_iv_bolus(t, dose=100.0)
+    assert c_iv[0] == pytest.approx(100.0 / pk.V1, rel=1e-8)
+    assert c_oral_like[0] == pytest.approx(50.0 / pk.V1, rel=1e-8)
+    assert c_iv[0] > c_oral_like[0]
+
+    with pytest.raises(ValueError, match="dose must be positive"):
+        pk.concentration_iv_bolus(t, dose=0.0)
+
+
+def test_pkmodel_iv_infusion_profile_and_validation():
+    pk = PKModel(F=1.0, ka=1.0, ke=0.2, Vd=20.0, Q=0.0, V2=10.0)
+    t = np.linspace(0.0, 8.0, 161)
+    c = pk.concentration_iv_infusion(t, rate=50.0, duration_h=2.0, start_h=0.0)
+    assert c.shape == t.shape
+    assert c[0] == pytest.approx(0.0, abs=1e-10)
+    assert np.max(c[(t >= 1.0) & (t <= 2.5)]) > np.max(c[t >= 6.0])
+
+    with pytest.raises(ValueError, match="rate must be positive"):
+        pk.concentration_iv_infusion(t, rate=0.0, duration_h=1.0)
+    with pytest.raises(ValueError, match="duration_h must be positive"):
+        pk.concentration_iv_infusion(t, rate=1.0, duration_h=0.0)
+    with pytest.raises(ValueError, match="start_h must be non-negative"):
+        pk.concentration_iv_infusion(t, rate=1.0, duration_h=1.0, start_h=-1.0)
+
+
+def test_pkmodel_steady_state_metrics():
+    pk = PKModel(F=1.0, ka=1.0, ke=0.15, Vd=20.0, Q=0.0, V2=10.0)
+    m = pk.steady_state_metrics(D=100.0, interval_h=8.0, n_doses=25, n_points=3000)
+    assert m["cmax_ss"] > 0
+    assert m["trough_ss"] > 0
+    assert m["cmax_ss"] >= m["trough_ss"]
+    assert m["auc_tau_ss"] > 0
+    assert m["accumulation_ratio_cmax"] >= 1.0
+
+    with pytest.raises(ValueError, match="D must be positive"):
+        pk.steady_state_metrics(D=0.0, interval_h=8.0, n_doses=10)
+    with pytest.raises(ValueError, match="interval_h must be positive"):
+        pk.steady_state_metrics(D=100.0, interval_h=0.0, n_doses=10)
+    with pytest.raises(ValueError, match="n_doses must be at least 2"):
+        pk.steady_state_metrics(D=100.0, interval_h=8.0, n_doses=1)
+    with pytest.raises(ValueError, match="n_points must be at least 3"):
+        pk.steady_state_metrics(D=100.0, interval_h=8.0, n_doses=10, n_points=2)
+
+
 def test_state_space_stable():
     """Test that state-space system is stable (eigenvalues < 0)."""
     pk = PKModel(F=0.8, ka=1.8, ke=0.28, Vd=65.0, Q=10.0, V2=20.0)

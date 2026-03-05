@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import numpy as np
 from scipy.integrate import solve_ivp, trapezoid
-from typing import Optional
+from typing import Callable, Optional
 
 
 
@@ -78,58 +78,38 @@ class PKModel:
 
     # ── Equação analítica ────────────────────────────────────────────────────
 
-    def concentration(self, t: np.ndarray, D: float = 1000.0) -> np.ndarray:
+    def _solve_concentration_profile(
+        self,
+        t: np.ndarray,
+        A1_0: float,
+        A2_0: float = 0.0,
+        infusion_rate_fn: Callable[[float], float] | None = None,
+    ) -> np.ndarray:
         """
-        Plasma concentration profile C(t).
-
-        Parameters
-        ----------
-        t : np.ndarray
-            Time vector in hours.
-        D : float, optional
-            Administered dose/activity (e.g., mg or MBq).
-
-        Notes
-        -----
-        - Time is expected in hours.
-        - If ``D`` is radioactive activity (MBq), state variables represent MBq
-          and concentrations represent MBq/L.
-        - ``CL`` and ``Q`` should be provided in L/h; ``V1`` and ``V2`` in L.
+        Solve two-compartment amount model and return central concentration profile.
         """
-        # Integra numericamente o sistema 2-compartimentos (quantidades)
         t = np.atleast_1d(np.asarray(t, dtype=float))
+        if np.any(t < 0):
+            raise ValueError("Tempos t devem ser não-negativos")
 
         CL = self.CL
         V1 = self.V1
-        Q  = self.Q
+        Q = self.Q
         V2 = self.V2
 
         def rhs(ti, y):
             A1, A2 = y
-            # Taxas inter-compartimentais
             k10 = CL / V1      # eliminação biológica do central (h^-1)
             k12 = Q  / V1      # central -> periférico (h^-1)
             k21 = Q  / V2      # periférico -> central (h^-1)
-
-            # Perda física (decaimento) age sobre a atividade em todos
-            # os compartimentos e é adicionada às taxas de saída.
             lam = self.lambda_phys
+            infusion_rate = 0.0 if infusion_rate_fn is None else float(infusion_rate_fn(float(ti)))
+            infusion_rate = max(infusion_rate, 0.0)
 
-            # dA1/dt: saída por clearance biológico, distribuição e decaimento
-            dA1 = - (k10 + k12 + lam) * A1 + (k21) * A2
-            # dA2/dt: troca com central e decaimento físico no periférico
+            dA1 = - (k10 + k12 + lam) * A1 + (k21) * A2 + infusion_rate
             dA2 = (k12) * A1 - (k21 + lam) * A2
             return [dA1, dA2]
 
-        # Aplicar a dose no compartimento central (AMT no central)
-        A1_0 = self.F * D
-        A2_0 = 0.0
-
-        if np.any(t < 0):
-            raise ValueError("Tempos t devem ser não-negativos")
-
-        # Caso com um único tempo pedido: tratar separadamente para evitar
-        # t_span com t0 == tf, o que falha em solve_ivp.
         if t.size == 1:
             if t[0] == 0.0:
                 A1 = np.array([A1_0])
@@ -139,12 +119,55 @@ class PKModel:
                                 rtol=1e-6, atol=1e-8)
                 A1 = sol.y[0]
         else:
-            # Integra uma vez com pontos requisitados
             sol = solve_ivp(rhs, (t.min(), t.max()), [A1_0, A2_0], t_eval=t,
                             vectorized=False, rtol=1e-6, atol=1e-8)
             A1 = sol.y[0]
-        C  = A1 / V1
+        C = A1 / V1
         return np.maximum(C, 0.0)
+
+    def concentration(self, t: np.ndarray, D: float = 1000.0) -> np.ndarray:
+        """
+        Plasma concentration profile C(t) after extravascular-like dose input.
+
+        The amount entering central compartment at t=0 is ``F * D``.
+        """
+        A1_0 = float(self.F * D)
+        return self._solve_concentration_profile(t=t, A1_0=A1_0, A2_0=0.0, infusion_rate_fn=None)
+
+    def concentration_iv_bolus(self, t: np.ndarray, dose: float = 1000.0) -> np.ndarray:
+        """
+        Concentration profile after an IV bolus in the central compartment.
+        """
+        if dose <= 0:
+            raise ValueError("dose must be positive")
+        return self._solve_concentration_profile(t=t, A1_0=float(dose), A2_0=0.0, infusion_rate_fn=None)
+
+    def concentration_iv_infusion(
+        self,
+        t: np.ndarray,
+        rate: float,
+        duration_h: float,
+        start_h: float = 0.0,
+    ) -> np.ndarray:
+        """
+        Concentration profile for IV infusion with constant rate.
+        """
+        if rate <= 0:
+            raise ValueError("rate must be positive")
+        if duration_h <= 0:
+            raise ValueError("duration_h must be positive")
+        if start_h < 0:
+            raise ValueError("start_h must be non-negative")
+
+        start_h = float(start_h)
+        end_h = start_h + float(duration_h)
+
+        def _rate_fn(ti: float) -> float:
+            if start_h <= ti <= end_h:
+                return float(rate)
+            return 0.0
+
+        return self._solve_concentration_profile(t=t, A1_0=0.0, A2_0=0.0, infusion_rate_fn=_rate_fn)
 
     def cmax(self, D: float = 1000.0) -> tuple[float, float]:
         """Retorna (Cmax, Tmax) numéricos usando `concentration`."""
@@ -196,6 +219,53 @@ class PKModel:
         t = np.linspace(0.0, t_end, 2000)
         C = self.concentration(t, D=D)
         return float(trapezoid(C, t))
+
+    def steady_state_metrics(
+        self,
+        D: float = 1000.0,
+        interval_h: float = 8.0,
+        n_doses: int = 20,
+        n_points: int = 4000,
+    ) -> dict:
+        """
+        Estimate steady-state metrics from repeated fixed-interval dosing.
+        """
+        if D <= 0:
+            raise ValueError("D must be positive")
+        if interval_h <= 0:
+            raise ValueError("interval_h must be positive")
+        if n_doses < 2:
+            raise ValueError("n_doses must be at least 2")
+        if n_points < 3:
+            raise ValueError("n_points must be at least 3")
+
+        t_end = float(interval_h * n_doses)
+        t = np.linspace(0.0, t_end, int(n_points))
+        c = self.concentration_multiple_dose(t, D=float(D), interval_h=float(interval_h), n_doses=int(n_doses))
+
+        t_start = (n_doses - 1) * float(interval_h)
+        mask_last = t >= t_start
+        t_last = t[mask_last]
+        c_last = c[mask_last]
+
+        cmax_ss = float(np.max(c_last))
+        trough_ss = float(np.min(c_last))
+        auc_tau_ss = float(trapezoid(c_last, t_last))
+
+        t_single = np.linspace(0.0, float(interval_h), max(100, int(n_points / max(n_doses, 1))))
+        c_single = self.concentration(t_single, D=float(D))
+        cmax_single = float(np.max(c_single))
+        accumulation_ratio = float(cmax_ss / cmax_single)
+
+        return {
+            "cmax_ss": cmax_ss,
+            "trough_ss": trough_ss,
+            "auc_tau_ss": auc_tau_ss,
+            "accumulation_ratio_cmax": accumulation_ratio,
+            "interval_h": float(interval_h),
+            "n_doses": int(n_doses),
+            "t_end": t_end,
+        }
 
     # ── Monte Carlo (sem covariáveis) ────────────────────────────────────────
 

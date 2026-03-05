@@ -119,6 +119,88 @@ def cmd_simulate(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_simulate_iv(args: argparse.Namespace) -> int:
+    db = DrugDatabase(args.dataset)
+    drug = db.get_drug(args.drug)
+    pk = PKModel(**drug.pk_kwargs)
+    t = np.linspace(0.0, float(args.t_end), int(args.n_points))
+
+    payload_extra = {"mode": args.mode}
+    if args.mode == "bolus":
+        dose = float(args.dose) if args.dose is not None else float(drug.dose)
+        c = pk.concentration_iv_bolus(t, dose=dose)
+        payload_extra["dose"] = dose
+    else:
+        if args.infusion_rate is None:
+            raise ValueError("Provide --infusion-rate for infusion mode")
+        if args.infusion_duration_h is None:
+            raise ValueError("Provide --infusion-duration-h for infusion mode")
+        rate = float(args.infusion_rate)
+        duration = float(args.infusion_duration_h)
+        start = float(args.infusion_start_h)
+        c = pk.concentration_iv_infusion(t, rate=rate, duration_h=duration, start_h=start)
+        payload_extra["infusion_rate"] = rate
+        payload_extra["infusion_duration_h"] = duration
+        payload_extra["infusion_start_h"] = start
+        payload_extra["infusion_total_dose"] = float(rate * duration)
+
+    output_csv = None
+    if args.output_csv:
+        out = Path(args.output_csv)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        np.savetxt(out, np.column_stack([t, c]), delimiter=",", header="time_h,conc", comments="")
+        output_csv = str(out)
+
+    idx = int(np.nanargmax(c))
+    _print_json(
+        {
+            "command": "simulate-iv",
+            "drug": drug.name,
+            "t_end": float(args.t_end),
+            "n_points": int(args.n_points),
+            "cmax": float(c[idx]),
+            "tmax": float(t[idx]),
+            "auc_0_tend": float(np.trapezoid(c, t)),
+            "output_csv": output_csv,
+            **payload_extra,
+        }
+    )
+    return 0
+
+
+def cmd_steady_state(args: argparse.Namespace) -> int:
+    db = DrugDatabase(args.dataset)
+    drug = db.get_drug(args.drug)
+    dose = float(args.dose) if args.dose is not None else float(drug.dose)
+    interval_h = float(args.interval_h)
+    n_doses = int(args.n_doses)
+    n_points = int(args.n_points)
+    pk = PKModel(**drug.pk_kwargs)
+
+    metrics = pk.steady_state_metrics(D=dose, interval_h=interval_h, n_doses=n_doses, n_points=n_points)
+
+    output_csv = None
+    if args.output_csv:
+        t_end = interval_h * n_doses
+        t = np.linspace(0.0, float(t_end), int(n_points))
+        c = pk.concentration_multiple_dose(t, D=dose, interval_h=interval_h, n_doses=n_doses)
+        out = Path(args.output_csv)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        np.savetxt(out, np.column_stack([t, c]), delimiter=",", header="time_h,conc", comments="")
+        output_csv = str(out)
+
+    _print_json(
+        {
+            "command": "steady-state",
+            "drug": drug.name,
+            "dose": dose,
+            "output_csv": output_csv,
+            **metrics,
+        }
+    )
+    return 0
+
+
 def cmd_simulate_cohort(args: argparse.Namespace) -> int:
     db = DrugDatabase(args.dataset)
     drug = db.get_drug(args.drug)
@@ -805,6 +887,27 @@ def build_parser() -> argparse.ArgumentParser:
     p_sim.add_argument("--no-pd", action="store_true", help="Disable PD simulation")
     p_sim.add_argument("--output", default=None, help="Optional CSV output path for PK percentiles")
     p_sim.set_defaults(func=cmd_simulate)
+
+    p_iv = sub.add_parser("simulate-iv", help="Simulate IV bolus or infusion profile")
+    p_iv.add_argument("--drug", required=True, help="Drug name from dataset")
+    p_iv.add_argument("--mode", choices=["bolus", "infusion"], default="bolus", help="IV input mode")
+    p_iv.add_argument("--dose", type=float, default=None, help="Bolus dose (used in bolus mode)")
+    p_iv.add_argument("--infusion-rate", type=float, default=None, help="Infusion rate in amount/h")
+    p_iv.add_argument("--infusion-duration-h", type=float, default=None, help="Infusion duration in hours")
+    p_iv.add_argument("--infusion-start-h", type=float, default=0.0, help="Infusion start time in hours")
+    p_iv.add_argument("--t-end", type=float, default=24.0, help="Simulation horizon in hours")
+    p_iv.add_argument("--n-points", type=int, default=400, help="Number of points in profile")
+    p_iv.add_argument("--output-csv", default=None, help="Optional output CSV path")
+    p_iv.set_defaults(func=cmd_simulate_iv)
+
+    p_ss = sub.add_parser("steady-state", help="Estimate steady-state metrics from repeated dosing")
+    p_ss.add_argument("--drug", required=True, help="Drug name from dataset")
+    p_ss.add_argument("--dose", type=float, default=None, help="Dose override")
+    p_ss.add_argument("--interval-h", type=float, required=True, help="Dose interval in hours")
+    p_ss.add_argument("--n-doses", type=int, default=20, help="Number of doses to approximate steady-state")
+    p_ss.add_argument("--n-points", type=int, default=4000, help="Number of points in profile")
+    p_ss.add_argument("--output-csv", default=None, help="Optional output CSV path")
+    p_ss.set_defaults(func=cmd_steady_state)
 
     p_cohort = sub.add_parser("simulate-cohort", help="Simulate PK metrics per patient from cohort CSV")
     p_cohort.add_argument("--input", required=True, help="Path to cohort CSV (requires patient_id column)")

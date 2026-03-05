@@ -75,6 +75,120 @@ def test_cli_simulate_writes_csv(tmp_path, capsys):
     assert out_csv.read_text(encoding="utf-8").startswith("time,p5,p50,p95")
 
 
+def test_cli_simulate_iv_bolus(tmp_path, capsys):
+    out_csv = tmp_path / "iv_bolus.csv"
+    code = main(
+        [
+            "simulate-iv",
+            "--drug",
+            "Paracetamol",
+            "--mode",
+            "bolus",
+            "--dose",
+            "1000",
+            "--output-csv",
+            str(out_csv),
+        ]
+    )
+    output = capsys.readouterr().out
+    payload = json.loads(output)
+    assert code == 0
+    assert payload["command"] == "simulate-iv"
+    assert payload["mode"] == "bolus"
+    assert payload["cmax"] > 0
+    assert payload["auc_0_tend"] > 0
+    assert out_csv.exists()
+
+
+def test_cli_simulate_iv_infusion(tmp_path, capsys):
+    out_csv = tmp_path / "iv_infusion.csv"
+    code = main(
+        [
+            "simulate-iv",
+            "--drug",
+            "Paracetamol",
+            "--mode",
+            "infusion",
+            "--infusion-rate",
+            "200",
+            "--infusion-duration-h",
+            "2",
+            "--infusion-start-h",
+            "0.5",
+            "--output-csv",
+            str(out_csv),
+        ]
+    )
+    output = capsys.readouterr().out
+    payload = json.loads(output)
+    assert code == 0
+    assert payload["command"] == "simulate-iv"
+    assert payload["mode"] == "infusion"
+    assert payload["infusion_rate"] == pytest.approx(200.0)
+    assert payload["infusion_duration_h"] == pytest.approx(2.0)
+    assert payload["infusion_start_h"] == pytest.approx(0.5)
+    assert payload["infusion_total_dose"] == pytest.approx(400.0)
+    assert payload["cmax"] > 0
+    assert payload["auc_0_tend"] > 0
+    assert out_csv.exists()
+
+
+def test_cli_simulate_iv_infusion_validation(capsys):
+    code = main(["simulate-iv", "--drug", "Paracetamol", "--mode", "infusion"])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "Provide --infusion-rate" in err
+
+
+def test_cli_simulate_iv_infusion_missing_duration(capsys):
+    code = main(
+        [
+            "simulate-iv",
+            "--drug",
+            "Paracetamol",
+            "--mode",
+            "infusion",
+            "--infusion-rate",
+            "100",
+        ]
+    )
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "Provide --infusion-duration-h" in err
+
+
+def test_cli_steady_state(tmp_path, capsys):
+    out_csv = tmp_path / "steady_state.csv"
+    code = main(
+        [
+            "steady-state",
+            "--drug",
+            "Paracetamol",
+            "--interval-h",
+            "12",
+            "--n-doses",
+            "20",
+            "--output-csv",
+            str(out_csv),
+        ]
+    )
+    output = capsys.readouterr().out
+    payload = json.loads(output)
+    assert code == 0
+    assert payload["command"] == "steady-state"
+    assert payload["cmax_ss"] > 0
+    assert payload["auc_tau_ss"] > 0
+    assert payload["accumulation_ratio_cmax"] >= 1.0
+    assert out_csv.exists()
+
+
+def test_cli_steady_state_validation(capsys):
+    code = main(["steady-state", "--drug", "Paracetamol", "--interval-h", "0"])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "interval_h must be positive" in err
+
+
 def test_cli_simulate_cohort(tmp_path, capsys):
     input_csv = tmp_path / "cohort.csv"
     out_csv = tmp_path / "cohort_out.csv"

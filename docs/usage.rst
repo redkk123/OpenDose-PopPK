@@ -53,6 +53,38 @@ CLI Regimen Simulation
       --output-csv output/tables/paracetamol_regimen.csv \
       --plot-png output/figures/paracetamol_regimen.png
 
+CLI IV Simulation
+-----------------
+
+.. code-block:: bash
+
+    opendose simulate-iv \
+      --drug Paracetamol \
+      --mode bolus \
+      --dose 1000 \
+      --output-csv output/tables/paracetamol_iv_bolus.csv
+
+.. code-block:: bash
+
+    opendose simulate-iv \
+      --drug Paracetamol \
+      --mode infusion \
+      --infusion-rate 200 \
+      --infusion-duration-h 2 \
+      --infusion-start-h 0 \
+      --output-csv output/tables/paracetamol_iv_infusion.csv
+
+CLI Steady-State Metrics
+------------------------
+
+.. code-block:: bash
+
+    opendose steady-state \
+      --drug Paracetamol \
+      --interval-h 12 \
+      --n-doses 20 \
+      --output-csv output/tables/paracetamol_steady_state.csv
+
 CLI Cohort Simulation
 ---------------------
 
