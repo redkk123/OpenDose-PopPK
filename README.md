@@ -75,9 +75,12 @@ git clone https://github.com/redkk123/OpenDose-PopPK.git
 cd OpenDose-PopPK
 # Recommended: install the package for local development
 pip install -e .
-# or install the package (non-editable) and dev dependencies
+# or install the package (non-editable)
 pip install .
+# runtime-only dependencies (optional explicit install)
 pip install -r requirements.txt
+# development tooling (tests/lint/type-check)
+pip install -e ".[dev]"
 ```
 
 ### Running tests
@@ -388,6 +391,7 @@ sphinx-build -b html docs docs/_build/html
 ## 📜 Citation
 
 If you use this framework in your research, please cite:
+GitHub citation metadata is available in `CITATION.cff`.
 
 ```bibtex
 @article{gomes2026opendose,

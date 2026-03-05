@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use OpenDose-PopPK, please cite it using this metadata."
+title: "OpenDose-PopPK"
+type: software
+authors:
+  - family-names: "Gomes"
+    given-names: "Angelo Gabriel C. Silva"
+    email: "angelogabriel860@gmail.com"
+repository-code: "https://github.com/redkk123/OpenDose-PopPK"
+url: "https://github.com/redkk123/OpenDose-PopPK"
+license: "MIT"
+version: "1.0.0"
+keywords:
+  - pharmacokinetics
+  - pharmacodynamics
+  - population-pk
+  - poppk
+  - bayesian
