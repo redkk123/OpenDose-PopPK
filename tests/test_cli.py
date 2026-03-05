@@ -13,6 +13,42 @@ def test_cli_list_drugs(capsys):
     assert "Paracetamol" in out
 
 
+def test_cli_validate_dataset(tmp_path, capsys):
+    input_csv = tmp_path / "drugs.csv"
+    clean_csv = tmp_path / "drugs_clean.csv"
+    input_csv.write_text(
+        "Drug,F,ka_h,ke_h,Vd_L,dose_mg,EC50_ugmL,n_hill\n"
+        "Paracetamol,0.8,1.8,0.28,65,1000,10,1.5\n",
+        encoding="utf-8",
+    )
+
+    code = main(
+        [
+            "--dataset",
+            str(input_csv),
+            "validate-dataset",
+            "--output-clean",
+            str(clean_csv),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "validate-dataset"
+    assert payload["rows"] == 1
+    assert payload["drugs"] == 1
+    assert payload["pd_complete_rows"] == 1
+    assert payload["pd_partial_rows"] == 0
+    assert clean_csv.exists()
+
+
+def test_cli_validate_dataset_error(capsys):
+    code = main(["--dataset", "missing_drug_dataset.csv", "validate-dataset"])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "No such file or directory" in err
+
+
 def test_cli_simulate_writes_csv(tmp_path, capsys):
     out_csv = tmp_path / "sim.csv"
     code = main(

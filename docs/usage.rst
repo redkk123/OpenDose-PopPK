@@ -71,6 +71,15 @@ CLI Environment Check
 
     opendose doctor --strict
 
+CLI Drug Dataset Validation
+---------------------------
+
+.. code-block:: bash
+
+    opendose validate-dataset \
+      --dataset datasets/drugs_parameters.csv \
+      --output-clean output/tables/drugs_parameters_clean.csv
+
 CLI Dose Recommendation
 -----------------------
 

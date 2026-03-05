@@ -10,7 +10,7 @@ import numpy as np
 
 from . import CovariateModel, MAPEstimator, PDModel, PKModel, PopulationSimulator
 from .benchmark import benchmark_regimen_across_drugs, write_benchmark_csv
-from .database import DrugDatabase
+from .database import DrugDatabase, validate_drug_csv
 from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cmax
 from .population_fit import bootstrap_population_pk, fit_population_pk
 from .regimen import simulate_regimen, summarize_regimen, write_regimen_csv, write_regimen_plot
@@ -46,6 +46,25 @@ def cmd_list_drugs(args: argparse.Namespace) -> int:
     db = DrugDatabase(args.dataset)
     for name in db.list_drugs():
         print(name)
+    return 0
+
+
+def cmd_validate_dataset(args: argparse.Namespace) -> int:
+    df, summary = validate_drug_csv(args.dataset)
+    output_clean = None
+    if args.output_clean:
+        out = Path(args.output_clean)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(out, index=False)
+        output_clean = str(out)
+    _print_json(
+        {
+            "command": "validate-dataset",
+            "input": str(args.dataset),
+            "output_clean": output_clean,
+            **summary,
+        }
+    )
     return 0
 
 
@@ -605,6 +624,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_list = sub.add_parser("list-drugs", help="List available drugs from dataset")
     p_list.set_defaults(func=cmd_list_drugs)
+
+    p_dataset = sub.add_parser("validate-dataset", help="Validate drug-parameter dataset CSV")
+    p_dataset.add_argument(
+        "--output-clean",
+        default=None,
+        help="Optional output path for normalized dataset CSV",
+    )
+    p_dataset.set_defaults(func=cmd_validate_dataset)
 
     p_sim = sub.add_parser("simulate", help="Run population simulation for one drug")
     p_sim.add_argument("--drug", required=True, help="Drug name from dataset")
