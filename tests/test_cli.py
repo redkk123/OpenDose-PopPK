@@ -450,3 +450,105 @@ def test_cli_recommend_dose_validation_errors(capsys):
     err = capsys.readouterr().err
     assert code == 1
     assert "Use only one target mode" in err
+
+
+def test_cli_recommend_regimen_dose_cmax(tmp_path, capsys):
+    out_json = tmp_path / "regimen_dose_cmax.json"
+    code = main(
+        [
+            "recommend-regimen-dose",
+            "--drug",
+            "Paracetamol",
+            "--target-cmax",
+            "12",
+            "--interval-h",
+            "12",
+            "--n-doses",
+            "4",
+            "--output-json",
+            str(out_json),
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["command"] == "recommend-regimen-dose"
+    assert payload["mode"] == "regimen_cmax"
+    assert payload["recommended_dose"] > 0
+    assert out_json.exists()
+
+
+def test_cli_recommend_regimen_dose_trough(capsys):
+    code = main(
+        [
+            "recommend-regimen-dose",
+            "--drug",
+            "Paracetamol",
+            "--target-trough",
+            "1.0",
+            "--interval-h",
+            "12",
+            "--n-doses",
+            "4",
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["mode"] == "regimen_trough"
+
+
+def test_cli_recommend_regimen_dose_with_covariates(capsys):
+    code = main(
+        [
+            "recommend-regimen-dose",
+            "--drug",
+            "Paracetamol",
+            "--target-cmax",
+            "12",
+            "--interval-h",
+            "12",
+            "--n-doses",
+            "4",
+            "--weight",
+            "80",
+            "--crcl",
+            "70",
+            "--age",
+            "55",
+            "--sex",
+            "M",
+        ]
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert code == 0
+    assert payload["mode"] == "regimen_cmax"
+    assert payload["covariates"] == {"weight": 80.0, "crcl": 70.0, "age": 55.0}
+    assert payload["sex"] == "M"
+
+
+def test_cli_recommend_regimen_dose_validation(capsys):
+    code = main(["recommend-regimen-dose", "--drug", "Paracetamol", "--interval-h", "12", "--n-doses", "4"])
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "Provide --target-cmax or --target-trough" in err
+
+    code = main(
+        [
+            "recommend-regimen-dose",
+            "--drug",
+            "Paracetamol",
+            "--target-cmax",
+            "10",
+            "--target-trough",
+            "1",
+            "--interval-h",
+            "12",
+            "--n-doses",
+            "4",
+        ]
+    )
+    err = capsys.readouterr().err
+    assert code == 1
+    assert "Use only one target mode" in err

@@ -84,6 +84,18 @@ CLI Dose Recommendation
       --age 55 \
       --output-json output/reports/dose_recommendation.json
 
+CLI Regimen Dose Recommendation
+-------------------------------
+
+.. code-block:: bash
+
+    opendose recommend-regimen-dose \
+      --drug Paracetamol \
+      --target-trough 1.0 \
+      --interval-h 12 \
+      --n-doses 4 \
+      --output-json output/reports/regimen_dose_recommendation.json
+
 Covariate Modelling
 -------------------
 

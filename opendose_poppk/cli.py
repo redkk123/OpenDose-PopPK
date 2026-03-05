@@ -14,6 +14,10 @@ from .database import DrugDatabase
 from .dosing import recommend_dose_for_target_auc, recommend_dose_for_target_cmax
 from .population_fit import bootstrap_population_pk, fit_population_pk
 from .regimen import simulate_regimen, summarize_regimen, write_regimen_csv, write_regimen_plot
+from .regimen_dosing import (
+    recommend_regimen_dose_for_target_cmax,
+    recommend_regimen_dose_for_target_trough,
+)
 from .tdm import load_tdm_csv, summarize_tdm, write_tdm_template_csv
 from .tdm_fit import (
     build_tdm_prediction_table,
@@ -479,6 +483,67 @@ def cmd_recommend_dose(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_recommend_regimen_dose(args: argparse.Namespace) -> int:
+    if args.target_cmax is None and args.target_trough is None:
+        raise ValueError("Provide --target-cmax or --target-trough")
+    if args.target_cmax is not None and args.target_trough is not None:
+        raise ValueError("Use only one target mode at a time (--target-cmax or --target-trough)")
+
+    db = DrugDatabase(args.dataset)
+    drug = db.get_drug(args.drug)
+    base_pk = PKModel(**drug.pk_kwargs)
+
+    cov_values = {}
+    if args.weight is not None:
+        cov_values["weight"] = float(args.weight)
+    if args.crcl is not None:
+        cov_values["crcl"] = float(args.crcl)
+    if args.age is not None:
+        cov_values["age"] = float(args.age)
+
+    if cov_values:
+        cov = CovariateModel(base_pk)
+        params = cov.individualize(cov_values, sex=args.sex)
+        pk = PKModel(**params)
+    else:
+        params = dict(drug.pk_kwargs)
+        pk = base_pk
+
+    if args.target_cmax is not None:
+        rec = recommend_regimen_dose_for_target_cmax(
+            pk=pk,
+            target_cmax=float(args.target_cmax),
+            interval_h=float(args.interval_h),
+            n_doses=int(args.n_doses),
+            t_end=args.t_end,
+            n_points=int(args.n_points),
+        )
+    else:
+        rec = recommend_regimen_dose_for_target_trough(
+            pk=pk,
+            target_trough=float(args.target_trough),
+            interval_h=float(args.interval_h),
+            n_doses=int(args.n_doses),
+            t_end=args.t_end,
+            n_points=int(args.n_points),
+        )
+
+    payload = {
+        "command": "recommend-regimen-dose",
+        "drug": drug.name,
+        "sex": args.sex,
+        "covariates": cov_values,
+        "pk_params_used": {k: float(v) for k, v in params.items()},
+        **rec,
+    }
+    if args.output_json:
+        out = Path(args.output_json)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    _print_json(payload)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="opendose", description="OpenDose-PopPK CLI")
     parser.add_argument(
@@ -608,6 +673,23 @@ def build_parser() -> argparse.ArgumentParser:
     p_dose.add_argument("--sex", default="M", help="Patient sex (M/F), used with covariates")
     p_dose.add_argument("--output-json", default=None, help="Optional JSON output path")
     p_dose.set_defaults(func=cmd_recommend_dose)
+
+    p_reg_dose = sub.add_parser(
+        "recommend-regimen-dose", help="Recommend repeated-dose amount for target regimen Cmax or trough"
+    )
+    p_reg_dose.add_argument("--drug", required=True, help="Drug name from dataset")
+    p_reg_dose.add_argument("--target-cmax", type=float, default=None, help="Target regimen Cmax")
+    p_reg_dose.add_argument("--target-trough", type=float, default=None, help="Target regimen trough")
+    p_reg_dose.add_argument("--interval-h", type=float, required=True, help="Dose interval in hours")
+    p_reg_dose.add_argument("--n-doses", type=int, required=True, help="Number of scheduled doses")
+    p_reg_dose.add_argument("--t-end", type=float, default=None, help="Simulation horizon in hours")
+    p_reg_dose.add_argument("--n-points", type=int, default=1000, help="Number of points in regimen profile")
+    p_reg_dose.add_argument("--weight", type=float, default=None, help="Patient weight (kg)")
+    p_reg_dose.add_argument("--crcl", type=float, default=None, help="Patient CrCl (mL/min)")
+    p_reg_dose.add_argument("--age", type=float, default=None, help="Patient age (years)")
+    p_reg_dose.add_argument("--sex", default="M", help="Patient sex (M/F), used with covariates")
+    p_reg_dose.add_argument("--output-json", default=None, help="Optional JSON output path")
+    p_reg_dose.set_defaults(func=cmd_recommend_regimen_dose)
 
     return parser
 
