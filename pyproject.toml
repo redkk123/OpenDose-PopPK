@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "opendose-poppk"
-version = "1.0.0"
+version = "1.1.1"
 description = "Population Pharmacokinetic / Pharmacodynamic Modeling Framework"
 readme = "README.md"
 requires-python = ">=3.9"

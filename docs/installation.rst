@@ -55,7 +55,7 @@ Verifying the installation
 
     import opendose_poppk
     print(opendose_poppk.__version__)
-    # 1.0.0
+    # 1.1.1
 
 Building the documentation locally
 ------------------------------------

@@ -54,7 +54,7 @@ from .plotting import (
     plot_drug_comparison,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.1.1"
 
 __all__ = [
     "PKModel",

@@ -12,7 +12,7 @@ If you use **OpenDose-PopPK** in academic work, please cite:
       year      = {2024},
       url       = {https://github.com/redkk123/OpenDose-PopPK},
       license   = {MIT},
-      version   = {1.0.0},
+      version   = {1.1.1},
     }
 
 Plain-text citation::

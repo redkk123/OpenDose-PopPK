@@ -9,7 +9,7 @@ authors:
 repository-code: "https://github.com/redkk123/OpenDose-PopPK"
 url: "https://github.com/redkk123/OpenDose-PopPK"
 license: "MIT"
-version: "1.0.0"
+version: "1.1.1"
 keywords:
   - pharmacokinetics
   - pharmacodynamics
