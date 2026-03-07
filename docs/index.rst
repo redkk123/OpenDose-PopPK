@@ -8,17 +8,8 @@ providing 1- and 2-compartment PK models, Monte Carlo population simulation,
 covariate modelling, and Bayesian MAP individual estimation — all in a single
 lightweight library.
 
-.. image:: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/ci.yml/badge.svg
-   :target: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/ci.yml
-   :alt: CI
-
-.. image:: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/docs.yml/badge.svg
-   :target: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/docs.yml
-   :alt: Docs Build
-
-.. image:: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/release.yml/badge.svg
-   :target: https://github.com/redkk123/OpenDose-PopPK/actions/workflows/release.yml
-   :alt: Release
+Every Read the Docs build runs ``python -m pytest`` before Sphinx builds the docs.
+If the test suite fails, the documentation build is blocked.
 
 .. image:: https://readthedocs.org/projects/opendose-poppk/badge/?version=latest
    :target: https://opendose-poppk.readthedocs.io
@@ -27,13 +18,6 @@ lightweight library.
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
    :target: https://opensource.org/licenses/MIT
    :alt: License: MIT
-
-Latest local validation: March 5, 2026 (Python 3.14.2), ``python -m pytest -q`` -> ``199 passed``.
-
-Test status in docs:
-- CI badge above reflects automated test pipeline status (GitHub Actions).
-- Read the Docs badge reflects documentation build status only.
-- If cloud CI/CD billing/credits are unavailable, local tests are the primary validation path.
 
 ----
 
